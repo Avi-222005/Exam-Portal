@@ -1,0 +1,172 @@
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+
+export type ActiveTab = 'api-docs' | 'api-client' | 'code-editor';
+export type BottomTab = 'run-results' | 'custom-input' | 'test-results';
+
+export const useUiStore = defineStore('ui', () => {
+  const activeTab = ref<ActiveTab>(
+    (localStorage.getItem('activeTab') as ActiveTab) || 'code-editor',
+  );
+  const bottomTab = ref<BottomTab>('run-results');
+  const bannerDismissed = ref(
+    (() => {
+      try {
+        const raw = localStorage.getItem('bannerDismissedExamId');
+        const examRaw = localStorage.getItem('cachedActiveExam');
+        if (!raw || !examRaw) return false;
+        const examId = (JSON.parse(examRaw) as { id: number }).id;
+        return raw === String(examId);
+      } catch {
+        return false;
+      }
+    })(),
+  );
+  const sidebarWidth = ref(
+    parseInt(sessionStorage.getItem('sidebarWidth') || '400', 10),
+  );
+  const bottomPanelHeight = ref(
+    parseInt(sessionStorage.getItem('bottomPanelHeight') || '200', 10),
+  );
+  const sidebarCollapsed = ref(false);
+  const editorExpanded = ref(false);
+  const coachmarksVisible = ref(
+    localStorage.getItem('coachmarksDismissed') !== 'true',
+  );
+  const helpModalVisible = ref(false);
+  const theme = ref<'dark' | 'light'>(
+    document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+  );
+
+  const textScale = ref<number>(
+    parseInt(localStorage.getItem('user_text_scale') || '100', 10),
+  );
+
+  const scaleSteps = [85, 100, 115, 130, 145];
+
+  function applyTextScale(scale: number) {
+    textScale.value = scale;
+    localStorage.setItem('user_text_scale', String(scale));
+    document.documentElement.style.setProperty(
+      '--app-text-scale',
+      (scale / 100).toString(),
+    );
+  }
+
+  // Initialize on load
+  if (typeof document !== 'undefined') {
+    applyTextScale(textScale.value);
+  }
+
+  function increaseTextSize() {
+    const next = scaleSteps.find((s) => s > textScale.value);
+    if (next) applyTextScale(next);
+  }
+
+  function decreaseTextSize() {
+    const prev = [...scaleSteps].reverse().find((s) => s < textScale.value);
+    if (prev) applyTextScale(prev);
+  }
+
+  function resetTextSize() {
+    applyTextScale(100);
+  }
+
+  function toggleTheme() {
+    theme.value = theme.value === 'dark' ? 'light' : 'dark';
+    if (theme.value === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+
+  function setActiveTab(tab: ActiveTab) {
+    activeTab.value = tab;
+    localStorage.setItem('activeTab', tab);
+  }
+
+  function setBottomTab(tab: BottomTab) {
+    bottomTab.value = tab;
+  }
+
+  function dismissBanner() {
+    bannerDismissed.value = true;
+    try {
+      const examRaw = localStorage.getItem('cachedActiveExam');
+      if (examRaw) {
+        const examId = (JSON.parse(examRaw) as { id: number }).id;
+        localStorage.setItem('bannerDismissedExamId', String(examId));
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  function setSidebarWidth(w: number) {
+    sidebarWidth.value = w;
+    sessionStorage.setItem('sidebarWidth', String(w));
+  }
+
+  function setBottomPanelHeight(h: number) {
+    bottomPanelHeight.value = h;
+    sessionStorage.setItem('bottomPanelHeight', String(h));
+  }
+
+  function setSidebarCollapsed(val: boolean) {
+    if (!val && sidebarWidth.value < 280) setSidebarWidth(400);
+    sidebarCollapsed.value = val;
+  }
+
+  function toggleEditorExpanded() {
+    editorExpanded.value = !editorExpanded.value;
+  }
+
+  function dismissCoachmarks() {
+    coachmarksVisible.value = false;
+    localStorage.setItem('coachmarksDismissed', 'true');
+  }
+
+  function showCoachmarks() {
+    localStorage.removeItem('coachmarksDismissed');
+    coachmarksVisible.value = true;
+  }
+
+  function openHelpModal() {
+    helpModalVisible.value = true;
+  }
+
+  function closeHelpModal() {
+    helpModalVisible.value = false;
+  }
+
+  return {
+    activeTab,
+    bottomTab,
+    bannerDismissed,
+    sidebarWidth,
+    bottomPanelHeight,
+    sidebarCollapsed,
+    editorExpanded,
+    coachmarksVisible,
+    helpModalVisible,
+    theme,
+    textScale,
+    toggleTheme,
+    applyTextScale,
+    increaseTextSize,
+    decreaseTextSize,
+    resetTextSize,
+    setActiveTab,
+    setBottomTab,
+    dismissBanner,
+    setSidebarWidth,
+    setBottomPanelHeight,
+    setSidebarCollapsed,
+    toggleEditorExpanded,
+    dismissCoachmarks,
+    showCoachmarks,
+    openHelpModal,
+    closeHelpModal,
+  };
+});
