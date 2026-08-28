@@ -48,6 +48,15 @@
   --text-muted:     #64748b;
 }
 
+/* High-contrast off-white text for text-primary in dark mode, maintaining purple in light mode */
+.dark .text-primary {
+  color: #f1f5f9 !important;
+}
+
+.dark .hover\:text-primary:hover {
+  color: #ffffff !important;
+}
+
 /* ── Global overrides (preserved from base.css) ── */
 
 /* Scrollbar - ultra thin */
