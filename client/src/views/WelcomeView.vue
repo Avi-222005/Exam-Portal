@@ -116,51 +116,56 @@ const isRunningDemo = ref(false);
 const demoOutputReady = ref(true);
 
 const codeSnippets = {
-  python: `def max_subarray_sum(nums: list[int]) -> int:
-    # Kadane's Algorithm for optimal O(N) evaluation
-    max_so_far = current_max = nums[0]
-    for x in nums[1:]:
-        current_max = max(x, current_max + x)
-        max_so_far = max(max_so_far, current_max)
-    return max_so_far
+  python: `def two_sum(nums, target):
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
 
-# Run test cases
-print(max_subarray_sum([-2, 1, -3, 4, -1, 2, 1, -5, 4])) # Output: 6`,
+# Example
+print(two_sum([2, 7, 11, 15], 9))  # [0, 1]`,
 
   cpp: `#include <vector>
-#include <algorithm>
-#include <iostream>
+#include <unordered_map>
+using namespace std;
 
-int maxSubArray(const std::vector<int>& nums) {
-    int maxSoFar = nums[0], currentMax = nums[0];
-    for (size_t i = 1; i < nums.size(); ++i) {
-        currentMax = std::max(nums[i], currentMax + nums[i]);
-        maxSoFar = std::max(maxSoFar, currentMax);
+vector<int> twoSum(vector<int>& nums, int target) {
+    unordered_map<int, int> seen;
+    for (int i = 0; i < nums.size(); i++) {
+        int complement = target - nums[i];
+        if (seen.count(complement))
+            return {seen[complement], i};
+        seen[nums[i]] = i;
     }
-    return maxSoFar;
+    return {};
 }`,
 
   java: `class Solution {
-    public int maxSubArray(int[] nums) {
-        int maxSoFar = nums[0];
-        int currentMax = nums[0];
-        for (int i = 1; i < nums.length; i++) {
-            currentMax = Math.max(nums[i], currentMax + nums[i]);
-            maxSoFar = Math.max(maxSoFar, currentMax);
+    public int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> seen = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            int complement = target - nums[i];
+            if (seen.containsKey(complement))
+                return new int[]{seen.get(complement), i};
+            seen.put(nums[i], i);
         }
-        return maxSoFar;
+        return new int[]{};
     }
 }`,
 
-  javascript: `function maxSubArray(nums) {
-    let maxSoFar = nums[0];
-    let currentMax = nums[0];
-    for (let i = 1; i < nums.length; i++) {
-        currentMax = Math.max(nums[i], currentMax + nums[i]);
-        maxSoFar = Math.max(maxSoFar, currentMax);
+  javascript: `function twoSum(nums, target) {
+    const seen = new Map();
+    for (let i = 0; i < nums.length; i++) {
+        const complement = target - nums[i];
+        if (seen.has(complement))
+            return [seen.get(complement), i];
+        seen.set(nums[i], i);
     }
-    return maxSoFar;
-}`,
+}
+
+console.log(twoSum([2, 7, 11, 15], 9)); // [0, 1]`,
 };
 
 function runDemoCode() {
@@ -172,155 +177,122 @@ function runDemoCode() {
   }, 600);
 }
 
-// ── Feature Bento Data ───────────────────────────────────────────────────
-const bentoFeatures = [
+// ── Feature Data (product-focused) ───────────────────────────────────────
+const mainFeatures = [
   {
-    icon: 'terminal',
-    title: 'Isolated Judge0 Sandbox',
-    tag: 'High Performance',
-    desc: 'Code runs in dedicated sandbox containers with sub-second execution, memory thresholds, and strict isolation.',
-    highlight: '15+ Compilers',
+    icon: 'code',
+    title: 'Code in 15+ languages',
+    desc: 'Python, C++, Java, JavaScript, and more — each running in its own secure sandbox with instant feedback.',
   },
   {
-    icon: 'shield',
-    title: 'Anti-Cheat Proctoring',
-    tag: 'Integrity Guard',
-    desc: 'Fullscreen enforcement, clipboard isolation, focus monitoring, and audit logs prevent unfair advantages.',
-    highlight: 'Zero Plagiarism',
+    icon: 'visibility',
+    title: 'Built-in proctoring',
+    desc: 'Fullscreen lock, tab-switch detection, and clipboard monitoring keep every assessment fair and honest.',
   },
   {
     icon: 'leaderboard',
-    title: 'Real-Time ICPC Scoring',
-    tag: 'Live Standings',
-    desc: 'Sub-second rank updates driven by PostgreSQL materialized views with deterministic penalty scoring.',
-    highlight: 'O(1) Rank Queries',
-  },
-  {
-    icon: 'quiz',
-    title: 'Hybrid Assessment Suite',
-    tag: 'Versatile',
-    desc: 'Create mixed tests with algorithmic programming problems, multi-choice questions (MCQs), and custom test suites.',
-    highlight: 'Coding + MCQ',
-  },
-  {
-    icon: 'cloud_sync',
-    title: 'Resilient Autosave',
-    tag: 'Zero Data Loss',
-    desc: 'Every keystroke and code draft is debounced and synchronized to the server automatically.',
-    highlight: 'Real-Time Sync',
-  },
-  {
-    icon: 'palette',
-    title: 'White-Label Theming',
-    tag: 'Brand Ready',
-    desc: 'Easily customize platform branding, colors, logos, titles, and certificates via environment variables.',
-    highlight: 'Full Control',
+    title: 'Live leaderboards',
+    desc: 'Rankings update the moment a submission is graded. Candidates and admins see results in real time.',
   },
 ];
 
-// ── Candidate Journey Steps ──────────────────────────────────────────────
-const journeySteps = [
-  {
-    step: '01',
-    icon: 'badge',
-    title: 'Authenticate & Register',
-    desc: 'Candidates sign in securely via roll number or email credentials with instant JWT authorization.',
-  },
-  {
-    step: '02',
-    icon: 'fullscreen',
-    title: 'Proctored Lock-In',
-    desc: 'A secure full-screen assessment environment activates, isolating the editor and preventing external leakage.',
-  },
-  {
-    step: '03',
-    icon: 'code_blocks',
-    title: 'Monaco IDE & Run Tests',
-    desc: 'Solve challenges with VSCode-quality editor, syntax highlighting, sample testing, and starter code.',
-  },
-  {
-    step: '04',
-    icon: 'military_tech',
-    title: 'Automated ICPC Verdict',
-    desc: 'Submissions are verified against hidden test suites and immediately ranked on the real-time leaderboard.',
-  },
+const extraFeatures = [
+  { icon: 'save', title: 'Auto-save', desc: 'Every keystroke is saved. No work is ever lost.' },
+  { icon: 'quiz', title: 'MCQ + Coding', desc: 'Mix question types in one exam.' },
+  { icon: 'palette', title: 'Your brand', desc: 'Custom logo, colors, and name.' },
+  { icon: 'timer', title: 'Precise timing', desc: 'Server-synced countdown, no client tricks.' },
 ];
 
-// ── Official Rules ───────────────────────────────────────────────────────
-const platformRules = [
+// ── How It Works ─────────────────────────────────────────────────────────
+const steps = [
   {
     num: '01',
-    title: 'Individual & Solo Work Only',
-    desc: 'No collaboration, screen sharing, or third-party consultation is permitted during assessment sessions.',
+    title: 'Create an exam',
+    desc: 'Add coding problems or MCQs, set time limits, and choose which languages to allow.',
   },
   {
     num: '02',
-    title: 'Restricted External Paste Policy',
-    desc: 'The Monaco editor blocks pasting code from external applications, websites, and external tabs.',
+    title: 'Invite candidates',
+    desc: 'Share a link or register participants directly. They log in and see their exams.',
   },
   {
     num: '03',
-    title: 'Fullscreen Violation Thresholds',
-    desc: 'Exiting fullscreen or switching focus triggers security warnings and logs violation timestamps.',
+    title: 'Candidates code',
+    desc: 'They write and test solutions in a real code editor — proctored and secure.',
   },
   {
     num: '04',
-    title: 'Server-Synchronized Time Limits',
-    desc: 'Contest timers synchronize with the atomic server clock to guarantee an unbiased, accurate countdown.',
+    title: 'Review results',
+    desc: 'Scores, rankings, and submissions are available the moment the exam ends.',
+  },
+];
+
+// ── Fair Play Rules ──────────────────────────────────────────────────────
+const rules = [
+  {
+    num: '01',
+    title: 'Solo work only',
+    desc: 'No collaboration, screen sharing, or external help during an exam.',
+  },
+  {
+    num: '02',
+    title: 'No external pasting',
+    desc: 'The editor blocks paste from outside sources to ensure originality.',
+  },
+  {
+    num: '03',
+    title: 'Stay in fullscreen',
+    desc: 'Leaving fullscreen or switching tabs triggers a warning and is logged.',
+  },
+  {
+    num: '04',
+    title: 'Time is server-synced',
+    desc: 'The countdown runs on the server clock — no local clock manipulation.',
   },
 ];
 </script>
 
 <template>
   <div
-    class="relative flex w-full flex-col overflow-y-auto overflow-x-hidden bg-background-light dark:bg-[#0a0c10] font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen"
+    class="relative flex w-full flex-col overflow-y-auto overflow-x-hidden bg-white dark:bg-[#09090b] font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen"
   >
-    <!-- ── Ambient Glow & Grid Layer ───────────────────────────────────── -->
-    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      <div class="absolute inset-0 dot-grid opacity-[0.08] dark:opacity-[0.04]"></div>
-      <div class="ambient-glow glow-1"></div>
-      <div class="ambient-glow glow-2"></div>
-      <div class="ambient-glow glow-3"></div>
+    <!-- ── Subtle Background Gradient ────────────────────────────────── -->
+    <div class="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
+      <div class="hero-gradient"></div>
     </div>
 
     <!-- ── Header ─────────────────────────────────────────────────────── -->
     <AppHeader>
       <template #nav>
         <button
-          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
-          @click="scrollTo('contests')"
-        >
-          Live Contests
-        </button>
-        <button
-          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
+          class="nav-link"
           @click="scrollTo('features')"
         >
           Features
         </button>
         <button
-          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
+          class="nav-link"
           @click="scrollTo('sandbox')"
         >
-          Interactive IDE
+          Editor
         </button>
         <button
-          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
+          class="nav-link"
           @click="scrollTo('how-it-works')"
         >
           How It Works
         </button>
         <button
-          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
-          @click="scrollTo('rules')"
+          class="nav-link"
+          @click="scrollTo('contests')"
         >
-          Rules
+          Exams
         </button>
       </template>
 
       <template #mobile-toggle>
         <button
-          class="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+          class="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
           @click="mobileMenuOpen = !mobileMenuOpen"
         >
           <span class="material-symbols-outlined text-[20px]">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
@@ -328,11 +300,11 @@ const platformRules = [
       </template>
     </AppHeader>
 
-    <!-- ── Mobile Slide Navigation ─────────────────────────────────────── -->
+    <!-- ── Mobile Menu ────────────────────────────────────────────────── -->
     <Transition name="slide">
       <div
         v-if="mobileMenuOpen"
-        class="md:hidden fixed inset-x-0 top-[49px] z-40 bg-white/95 dark:bg-[#0d1117]/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/[0.08] p-5 flex flex-col gap-3 shadow-2xl"
+        class="md:hidden fixed inset-x-0 top-[49px] z-40 bg-white/95 dark:bg-[#09090b]/95 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/[0.06] p-5 flex flex-col gap-3 shadow-2xl"
       >
         <router-link
           v-if="authStore.isAuthenticated"
@@ -340,227 +312,149 @@ const platformRules = [
           class="flex items-center gap-2 text-xs font-bold text-primary py-2"
         >
           <span class="material-symbols-outlined text-[18px]">dashboard</span>
-          Student Dashboard
+          Dashboard
         </router-link>
-        <button
-          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
-          @click="scrollTo('contests')"
-        >
-          Live Contests
-        </button>
-        <button
-          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
-          @click="scrollTo('features')"
-        >
-          Features
-        </button>
-        <button
-          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
-          @click="scrollTo('sandbox')"
-        >
-          Interactive IDE
-        </button>
-        <button
-          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
-          @click="scrollTo('how-it-works')"
-        >
-          How It Works
-        </button>
-        <button
-          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
-          @click="scrollTo('rules')"
-        >
-          Rules
-        </button>
+        <button class="mobile-nav-link" @click="scrollTo('features')">Features</button>
+        <button class="mobile-nav-link" @click="scrollTo('sandbox')">Editor</button>
+        <button class="mobile-nav-link" @click="scrollTo('how-it-works')">How It Works</button>
+        <button class="mobile-nav-link" @click="scrollTo('contests')">Exams</button>
+        <button class="mobile-nav-link" @click="scrollTo('rules')">Fair Play</button>
       </div>
     </Transition>
 
     <main class="relative z-10 flex-1">
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <!-- HERO SECTION                                                     -->
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <section class="max-w-[1240px] mx-auto px-4 sm:px-6 pt-12 md:pt-20 pb-16 md:pb-24">
-        <!-- Top Pill Badge -->
-        <div class="flex justify-center mb-6">
-          <div
-            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 dark:bg-primary/15 border border-primary/30 text-xs font-semibold text-primary dark:text-slate-200 shadow-sm backdrop-blur-md"
-          >
-            <span class="flex h-2 w-2 relative">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-            </span>
-            <span>Next-Gen Technical Assessment Platform · {{ brand.appName }} v1.0</span>
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- HERO SECTION                                                  -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <section class="max-w-[1100px] mx-auto px-5 sm:px-8 pt-16 md:pt-28 pb-20 md:pb-32">
+        <!-- Tagline Pill -->
+        <div class="flex justify-center mb-8 animate-fade-in">
+          <div class="pill">
+            <span class="text-primary dark:text-primary">✦</span>
+            <span>The smarter way to run coding exams</span>
           </div>
         </div>
 
-        <!-- Main Headline & Subtitle -->
-        <div class="text-center max-w-4xl mx-auto mb-10 space-y-4">
-          <h1
-            class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] text-slate-900 dark:text-white"
-          >
-            Assess Engineers With
-            <span class="hero-gradient-text block sm:inline"> Precision & Integrity</span>
+        <!-- Headline -->
+        <div class="text-center max-w-3xl mx-auto mb-6 animate-fade-in-up">
+          <h1 class="text-5xl sm:text-6xl lg:text-[4.5rem] font-extrabold tracking-tight leading-[1.1] text-slate-900 dark:text-white">
+            Run coding exams<br />
+            <span class="hero-gradient-text">your candidates</span><br class="hidden sm:block" />
+            <span class="hero-gradient-text">actually respect.</span>
           </h1>
-          <p class="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            A production-grade online examination platform built with isolated Judge0 execution, Monaco IDE, strict
-            proctoring guards, and real-time ICPC leaderboards.
-          </p>
+        </div>
 
-          <!-- Dual CTA Buttons -->
-          <div class="flex flex-wrap items-center justify-center gap-3 pt-4">
-            <template v-if="loading">
-              <div class="h-12 w-44 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
-            </template>
-            <template v-else-if="viewingExam">
-              <button
-                class="btn-hero-primary group"
-                :disabled="entering || isUpcoming"
-                @click="() => enterContest()"
-              >
-                <span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">
-                  {{ isUpcoming ? 'schedule' : 'rocket_launch' }}
-                </span>
-                <span>
-                  {{
-                    entering
-                      ? 'Launching Workspace…'
-                      : isUpcoming
-                        ? `Starts in ${preStartRemaining}`
-                        : 'Enter Live Contest'
-                  }}
-                </span>
-                <span v-if="!isUpcoming" class="material-symbols-outlined text-[18px]">arrow_forward</span>
-              </button>
-            </template>
-            <template v-else>
-              <button class="btn-hero-primary" @click="scrollTo('contests')">
-                <span class="material-symbols-outlined text-[20px]">explore</span>
-                <span>Explore Contests</span>
-              </button>
-            </template>
+        <!-- Subtitle -->
+        <p class="text-center text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-xl mx-auto mb-10 leading-relaxed animate-fade-in-up delay-1">
+          Create, proctor, and evaluate coding assessments in minutes — not weeks. Built-in code editor, instant grading, and live leaderboards.
+        </p>
 
+        <!-- CTAs -->
+        <div class="flex flex-wrap items-center justify-center gap-4 mb-16 animate-fade-in-up delay-2">
+          <template v-if="loading">
+            <div class="h-12 w-40 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
+          </template>
+          <template v-else-if="viewingExam">
+            <button
+              class="btn-primary group"
+              :disabled="entering || isUpcoming"
+              @click="() => enterContest()"
+            >
+              <span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-0.5">
+                {{ isUpcoming ? 'schedule' : 'arrow_forward' }}
+              </span>
+              <span>
+                {{
+                  entering
+                    ? 'Launching…'
+                    : isUpcoming
+                      ? `Starts in ${preStartRemaining}`
+                      : 'Enter Exam'
+                }}
+              </span>
+            </button>
+          </template>
+          <template v-else>
             <router-link
               v-if="authStore.isAuthenticated"
               to="/dashboard"
-              class="btn-hero-secondary"
+              class="btn-primary no-underline"
             >
-              <span class="material-symbols-outlined text-[18px]">dashboard</span>
-              <span>Student Dashboard</span>
+              <span>Go to Dashboard</span>
+              <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
             </router-link>
-            <button
-              v-else
-              class="btn-hero-secondary"
-              @click="scrollTo('sandbox')"
-            >
-              <span class="material-symbols-outlined text-[18px]">code</span>
-              <span>Try Code Sandbox</span>
+            <button v-else class="btn-primary" @click="scrollTo('sandbox')">
+              <span>Get Started</span>
+              <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
-          </div>
+          </template>
+
+          <button
+            class="btn-ghost"
+            @click="scrollTo('sandbox')"
+          >
+            See it in action
+          </button>
         </div>
 
-        <!-- Metric Trust Bar -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto mb-14">
-          <div class="metric-card">
-            <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">&lt; 250ms</span>
-            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Execution Latency</span>
-          </div>
-          <div class="metric-card">
-            <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">15+ Compilers</span>
-            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Multi-Language Sandbox</span>
-          </div>
-          <div class="metric-card">
-            <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">99.99%</span>
-            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Evaluation Reliability</span>
-          </div>
-          <div class="metric-card">
-            <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">Air-Tight</span>
-            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Proctoring Guard</span>
-          </div>
-        </div>
-
-        <!-- Hero IDE Mockup Frame -->
-        <div class="relative max-w-5xl mx-auto">
-          <div class="hero-glow-box"></div>
-          <div class="relative bg-slate-950 border border-slate-800/80 rounded-2xl shadow-2xl overflow-hidden">
-            <!-- Window Top Bar -->
-            <div class="flex items-center justify-between px-4 py-3 bg-slate-900/90 border-b border-slate-800">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-[#ff5f57]/80"></span>
-                <span class="w-3 h-3 rounded-full bg-[#febc2e]/80"></span>
-                <span class="w-3 h-3 rounded-full bg-[#28c840]/80"></span>
-                <span class="ml-2 text-xs font-mono text-slate-400">solution.py — Scorix Monaco Sandbox</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-[10px] font-mono font-bold">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Judge0 Online
-                </span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/20 text-slate-200 text-[10px] font-mono font-bold">
-                  🛡️ Guard Active
-                </span>
-              </div>
+        <!-- Hero Product Mockup -->
+        <div class="relative max-w-4xl mx-auto animate-fade-in-up delay-3">
+          <div class="hero-mockup-glow"></div>
+          <div class="hero-mockup">
+            <!-- Window Chrome -->
+            <div class="flex items-center gap-2 px-4 py-3 bg-slate-100/80 dark:bg-[#18181b] border-b border-slate-200/60 dark:border-white/[0.06]">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-400/60"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400/60"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/60"></span>
+              <span class="ml-3 text-[11px] font-mono text-slate-400 dark:text-slate-500">{{ brand.appName }} — Workspace</span>
             </div>
 
-            <!-- Editor & Verdict Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 font-mono text-xs">
-              <!-- Left: Code Editor Window -->
-              <div class="lg:col-span-7 p-5 bg-[#090d13] text-slate-300 border-b lg:border-b-0 lg:border-r border-slate-800/80 space-y-1">
-                <div class="text-slate-600 select-none">1  <span class="text-purple-400 font-bold">def</span> <span class="text-sky-300">maxSubArray</span>(nums: <span class="text-emerald-400">list[int]</span>) -> <span class="text-emerald-400">int</span>:</div>
-                <div class="text-slate-600 select-none">2      <span class="text-slate-500 italic"># Kadane's dynamic optimization</span></div>
-                <div class="text-slate-600 select-none">3      max_sum = cur_sum = nums[<span class="text-amber-300">0</span>]</div>
-                <div class="text-slate-600 select-none">4      <span class="text-purple-400 font-bold">for</span> x <span class="text-purple-400 font-bold">in</span> nums[<span class="text-amber-300">1</span>:]:</div>
-                <div class="text-slate-600 select-none">5          cur_sum = <span class="text-sky-300">max</span>(x, cur_sum + x)</div>
-                <div class="text-slate-600 select-none">6          max_sum = <span class="text-sky-300">max</span>(max_sum, cur_sum)</div>
-                <div class="text-slate-600 select-none">7      <span class="text-purple-400 font-bold">return</span> max_sum</div>
-                <div class="text-slate-600 select-none">8  </div>
-                <div class="text-slate-600 select-none">9  <span class="text-slate-500 italic"># Automated test execution</span></div>
-                <div class="text-slate-600 select-none">10 print(maxSubArray([-2, 1, -3, 4, -1, 2, 1, -5, 4]))</div>
+            <!-- Split Pane Mockup -->
+            <div class="grid grid-cols-1 lg:grid-cols-12">
+              <!-- Left: Problem Panel -->
+              <div class="lg:col-span-5 p-5 border-b lg:border-b-0 lg:border-r border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-[#09090b]">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">Easy</span>
+                  <span class="text-xs text-slate-400">Problem 1 of 3</span>
+                </div>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-2">Two Sum</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+                  Given an array of integers <code class="text-[11px] px-1 py-0.5 rounded bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300">nums</code> and an integer <code class="text-[11px] px-1 py-0.5 rounded bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300">target</code>, return indices of the two numbers that add up to target.
+                </p>
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.06] text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                  <div><span class="text-slate-400 dark:text-slate-500">Input:</span> nums = [2,7,11,15], target = 9</div>
+                  <div><span class="text-slate-400 dark:text-slate-500">Output:</span> [0, 1]</div>
+                </div>
               </div>
 
-              <!-- Right: Execution Verdicts & Live Rank Preview -->
-              <div class="lg:col-span-5 p-5 bg-slate-950 flex flex-col justify-between gap-4">
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-2">
-                    <span class="font-bold uppercase tracking-wider text-slate-300">Test Case Results</span>
-                    <span class="text-emerald-400 font-bold">3/3 Passed</span>
-                  </div>
-
-                  <div class="space-y-2">
-                    <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px]">
-                      <span class="text-emerald-300 flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                        Case 1 (Standard input)
-                      </span>
-                      <span class="text-slate-400 font-bold">12ms · 14.2MB</span>
-                    </div>
-                    <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px]">
-                      <span class="text-emerald-300 flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                        Case 2 (Single element)
-                      </span>
-                      <span class="text-slate-400 font-bold">8ms · 14.1MB</span>
-                    </div>
-                    <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px]">
-                      <span class="text-emerald-300 flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                        Case 3 (Large array n=10⁵)
-                      </span>
-                      <span class="text-slate-400 font-bold">24ms · 16.8MB</span>
-                    </div>
-                  </div>
+              <!-- Right: Code Editor -->
+              <div class="lg:col-span-7 flex flex-col">
+                <div class="px-4 py-2 border-b border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-[#0f0f12] flex items-center justify-between">
+                  <span class="text-[11px] font-mono text-slate-400 dark:text-slate-500">solution.py</span>
+                  <span class="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-500">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Connected
+                  </span>
+                </div>
+                <div class="p-4 bg-white dark:bg-[#0a0a0d] font-mono text-xs text-slate-600 dark:text-slate-300 space-y-0.5 flex-1">
+                  <div><span class="text-slate-400 dark:text-slate-600 select-none mr-3">1</span><span class="text-purple-500 dark:text-purple-400 font-medium">def</span> <span class="text-sky-600 dark:text-sky-400">two_sum</span>(nums, target):</div>
+                  <div><span class="text-slate-400 dark:text-slate-600 select-none mr-3">2</span>    seen = {}</div>
+                  <div><span class="text-slate-400 dark:text-slate-600 select-none mr-3">3</span>    <span class="text-purple-500 dark:text-purple-400 font-medium">for</span> i, num <span class="text-purple-500 dark:text-purple-400 font-medium">in</span> enumerate(nums):</div>
+                  <div><span class="text-slate-400 dark:text-slate-600 select-none mr-3">4</span>        comp = target - num</div>
+                  <div><span class="text-slate-400 dark:text-slate-600 select-none mr-3">5</span>        <span class="text-purple-500 dark:text-purple-400 font-medium">if</span> comp <span class="text-purple-500 dark:text-purple-400 font-medium">in</span> seen:</div>
+                  <div><span class="text-slate-400 dark:text-slate-600 select-none mr-3">6</span>            <span class="text-purple-500 dark:text-purple-400 font-medium">return</span> [seen[comp], i]</div>
+                  <div><span class="text-slate-400 dark:text-slate-600 select-none mr-3">7</span>        seen[num] = i</div>
                 </div>
 
-                <!-- Floating Score Banner -->
-                <div class="p-3 rounded-xl bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border border-primary/30 flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[20px] text-primary dark:text-slate-100">military_tech</span>
-                    <div>
-                      <div class="text-[11px] font-bold text-white">ICPC Accepted</div>
-                      <div class="text-[10px] text-slate-400">+100 Pts · 0 Penalty</div>
-                    </div>
+                <!-- Results Bar -->
+                <div class="px-4 py-3 bg-slate-50 dark:bg-[#0f0f12] border-t border-slate-200/60 dark:border-white/[0.06] flex items-center justify-between">
+                  <div class="flex items-center gap-2 text-[11px]">
+                    <span class="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span>
+                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">All tests passed</span>
+                    <span class="text-slate-400">· 12ms · 14.2 MB</span>
                   </div>
-                  <span class="px-2 py-1 rounded bg-primary text-white text-[10px] font-bold uppercase">
-                    Rank #1
+                  <span class="px-2.5 py-1 rounded-lg bg-primary/10 text-primary dark:text-primary text-[10px] font-bold">
+                    +100 pts
                   </span>
                 </div>
               </div>
@@ -569,37 +463,177 @@ const platformRules = [
         </div>
       </section>
 
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <!-- LIVE CONTESTS SECTION (#contests)                               -->
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <section id="contests" class="py-20 bg-slate-100/70 dark:bg-[#0d1117]/80 border-y border-slate-200 dark:border-white/[0.06]">
-        <div class="max-w-[1240px] mx-auto px-4 sm:px-6">
-          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
-            <div>
-              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200 mb-3">
-                <span class="material-symbols-outlined text-[14px]">sports_esports</span>
-                Examination Arena
-              </div>
-              <h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                Live & Upcoming Contests
-              </h2>
-            </div>
-            <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md">
-              Select an examination to view rules, schedule, allowed runtimes, and enter the proctored assessment.
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- FEATURES (#features)                                          -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <section id="features" class="py-20 md:py-28">
+        <div class="max-w-[1100px] mx-auto px-5 sm:px-8">
+          <div class="text-center max-w-2xl mx-auto mb-16">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+              Everything you need to run<br class="hidden sm:block" /> secure coding exams
+            </h2>
+            <p class="text-base text-slate-500 dark:text-slate-400">
+              From the code editor to the leaderboard — it's all built in.
             </p>
           </div>
 
-          <!-- Loading Skeletons -->
-          <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div v-for="i in 3" :key="i" class="h-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse p-6" />
+          <!-- Main 3 Features -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+            <div
+              v-for="(feat, i) in mainFeatures"
+              :key="i"
+              class="feature-card group"
+            >
+              <div class="w-10 h-10 rounded-xl bg-primary/8 dark:bg-primary/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                <span class="material-symbols-outlined text-primary dark:text-primary text-[22px]">{{ feat.icon }}</span>
+              </div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">{{ feat.title }}</h3>
+              <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{{ feat.desc }}</p>
+            </div>
           </div>
 
-          <!-- Multiple Active Exams Cards -->
-          <div v-else-if="examStore.activeExams.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Extra Features Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div
+              v-for="(feat, i) in extraFeatures"
+              :key="i"
+              class="extra-feature-card"
+            >
+              <span class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[18px] mb-2">{{ feat.icon }}</span>
+              <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-0.5">{{ feat.title }}</h4>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ feat.desc }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- INTERACTIVE DEMO (#sandbox)                                   -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <section id="sandbox" class="py-20 md:py-28 bg-slate-50/80 dark:bg-[#0c0c0f] border-y border-slate-200/60 dark:border-white/[0.04]">
+        <div class="max-w-[1100px] mx-auto px-5 sm:px-8">
+          <div class="text-center max-w-2xl mx-auto mb-12">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+              Try the editor
+            </h2>
+            <p class="text-base text-slate-500 dark:text-slate-400">
+              This is what your candidates will see. Pick a language and hit Run.
+            </p>
+          </div>
+
+          <div class="max-w-3xl mx-auto">
+            <div class="demo-editor">
+              <!-- Tab Bar -->
+              <div class="flex flex-wrap items-center justify-between px-4 py-2.5 bg-slate-50 dark:bg-[#18181b] border-b border-slate-200/60 dark:border-white/[0.06] gap-3">
+                <div class="flex items-center gap-1">
+                  <button
+                    v-for="lang in (['python', 'cpp', 'java', 'javascript'] as const)"
+                    :key="lang"
+                    class="lang-tab"
+                    :class="activeLang === lang ? 'lang-tab--active' : ''"
+                    @click="activeLang = lang"
+                  >
+                    {{ lang === 'cpp' ? 'C++' : lang === 'javascript' ? 'JS' : lang.charAt(0).toUpperCase() + lang.slice(1) }}
+                  </button>
+                </div>
+
+                <button
+                  class="run-btn"
+                  :disabled="isRunningDemo"
+                  @click="runDemoCode"
+                >
+                  <span class="material-symbols-outlined text-[16px]" :class="{ 'animate-spin': isRunningDemo }">
+                    {{ isRunningDemo ? 'refresh' : 'play_arrow' }}
+                  </span>
+                  <span>{{ isRunningDemo ? 'Running…' : 'Run' }}</span>
+                </button>
+              </div>
+
+              <!-- Code -->
+              <div class="p-5 font-mono text-[13px] leading-relaxed text-slate-700 dark:text-slate-300 bg-white dark:bg-[#0a0a0d] overflow-x-auto min-h-[200px]">
+                <pre><code>{{ codeSnippets[activeLang] }}</code></pre>
+              </div>
+
+              <!-- Output -->
+              <div class="px-5 py-3 bg-slate-50 dark:bg-[#18181b] border-t border-slate-200/60 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-400 font-semibold">Output:</span>
+                  <span v-if="demoOutputReady" class="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    Accepted · [0, 1] · 14ms
+                  </span>
+                  <span v-else class="text-amber-500 animate-pulse">Running…</span>
+                </div>
+                <span class="text-slate-400 text-[11px]">Memory: 14.4 MB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- HOW IT WORKS (#how-it-works)                                  -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <section id="how-it-works" class="py-20 md:py-28">
+        <div class="max-w-[1100px] mx-auto px-5 sm:px-8">
+          <div class="text-center max-w-2xl mx-auto mb-16">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+              How it works
+            </h2>
+            <p class="text-base text-slate-500 dark:text-slate-400">
+              From setup to results in four simple steps.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div
+              v-for="(s, i) in steps"
+              :key="i"
+              class="step-card"
+            >
+              <span class="text-4xl font-black text-primary/20 dark:text-primary/25 font-mono mb-3 block">{{ s.num }}</span>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">{{ s.title }}</h3>
+              <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{{ s.desc }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- LIVE EXAMS (#contests)                                        -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <section id="contests" class="py-20 md:py-28 bg-slate-50/80 dark:bg-[#0c0c0f] border-y border-slate-200/60 dark:border-white/[0.04]">
+        <div class="max-w-[1100px] mx-auto px-5 sm:px-8">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+            <div>
+              <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
+                Your upcoming exams
+              </h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                Jump into an active assessment or check what's coming next.
+              </p>
+            </div>
+            <router-link
+              v-if="authStore.isAuthenticated"
+              to="/dashboard"
+              class="text-sm font-semibold text-primary dark:text-primary hover:underline no-underline flex items-center gap-1"
+            >
+              View dashboard
+              <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </router-link>
+          </div>
+
+          <!-- Loading -->
+          <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div v-for="i in 3" :key="i" class="h-48 rounded-2xl bg-white dark:bg-[#18181b] border border-slate-200/60 dark:border-white/[0.06] animate-pulse" />
+          </div>
+
+          <!-- Exam Cards -->
+          <div v-else-if="examStore.activeExams.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div
               v-for="exam in examStore.activeExams"
               :key="exam.id"
-              class="exam-hub-card group"
+              class="exam-card group"
             >
               <div class="flex items-center justify-between mb-4">
                 <span
@@ -607,36 +641,29 @@ const platformRules = [
                   class="status-pill status-pill--upcoming"
                 >
                   <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                  Starting Soon
+                  Upcoming
                 </span>
                 <span v-else class="status-pill status-pill--live">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Live Contest
+                  Live
                 </span>
-
-                <span class="text-xs font-mono text-slate-400 flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px]">timer</span>
-                  {{ exam.durationMinutes }}m
-                </span>
+                <span class="text-xs font-mono text-slate-400 dark:text-slate-500">{{ exam.durationMinutes }}m</span>
               </div>
 
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary dark:group-hover:text-slate-100 transition-colors">
+              <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1 group-hover:text-primary dark:group-hover:text-primary transition-colors">
                 {{ exam.title }}
               </h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-6">
-                {{ formatSchedule(exam) }}
-              </p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">{{ formatSchedule(exam) }}</p>
 
-              <div class="pt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between gap-3 mt-auto">
-                <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                  <span class="font-bold text-slate-700 dark:text-slate-200">{{ exam.allowedLanguages?.length || 'All' }}</span> Languages
-                </div>
-
+              <div class="mt-auto pt-4 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
+                <span class="text-xs text-slate-400 dark:text-slate-500">
+                  {{ exam.allowedLanguages?.length || 'All' }} languages
+                </span>
                 <button
-                  class="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold shadow-md shadow-primary/20 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                  class="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-semibold cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
                   @click="enterContest(exam)"
                 >
-                  <span>Enter Contest</span>
+                  Enter
                   <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
                 </button>
               </div>
@@ -644,270 +671,115 @@ const platformRules = [
           </div>
 
           <!-- Empty State -->
-          <div v-else class="text-center p-12 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl mx-auto space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary dark:text-slate-200 flex items-center justify-center mx-auto">
-              <span class="material-symbols-outlined text-2xl">event_busy</span>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white">No Scheduled Contests Currently</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-              There are no active exam windows right now. You can log into your Student Dashboard to review your solved problems and past performance history.
-            </p>
+          <div v-else class="text-center py-16 px-8 bg-white dark:bg-[#18181b] border border-slate-200/60 dark:border-white/[0.06] rounded-2xl max-w-md mx-auto">
+            <span class="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-4 block">event_available</span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">No exams scheduled</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Check back soon or head to your dashboard.</p>
             <router-link
               to="/dashboard"
-              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all no-underline"
             >
-              <span>Go to Student Dashboard</span>
+              Go to Dashboard
               <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
             </router-link>
           </div>
         </div>
       </section>
 
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <!-- BENTO FEATURES GRID (#features)                                  -->
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <section id="features" class="py-20 md:py-28 max-w-[1240px] mx-auto px-4 sm:px-6">
-        <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200">
-            <span class="material-symbols-outlined text-[14px]">auto_awesome</span>
-            Engineered For Scale
-          </div>
-          <h2 class="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-            Everything Required for High-Stakes Assessments
-          </h2>
-          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-            From classroom coding challenges to company-wide technical hiring screens, Scorix delivers institutional power.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
-            v-for="(item, i) in bentoFeatures"
-            :key="i"
-            class="bento-card group"
-          >
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary dark:text-slate-200 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <span class="material-symbols-outlined text-[20px]">{{ item.icon }}</span>
-              </div>
-              <span class="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300">
-                {{ item.tag }}
-              </span>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary dark:group-hover:text-slate-100 transition-colors">
-              {{ item.title }}
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
-              {{ item.desc }}
-            </p>
-            <div class="mt-auto pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center gap-1.5 text-xs font-bold text-primary dark:text-slate-200">
-              <span>{{ item.highlight }}</span>
-              <span class="material-symbols-outlined text-[14px]">check</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <!-- INTERACTIVE CODE PLAYGROUND (#sandbox)                          -->
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <section id="sandbox" class="py-20 bg-slate-900/40 dark:bg-[#07090d] border-t border-slate-200 dark:border-white/[0.06]">
-        <div class="max-w-[1240px] mx-auto px-4 sm:px-6">
-          <div class="text-center max-w-2xl mx-auto mb-12 space-y-3">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200">
-              <span class="material-symbols-outlined text-[14px]">play_circle</span>
-              Interactive Sandbox
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Test Drive the Execution Engine
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- FAIR PLAY RULES (#rules)                                      -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <section id="rules" class="py-20 md:py-28">
+        <div class="max-w-[1100px] mx-auto px-5 sm:px-8">
+          <div class="text-center max-w-2xl mx-auto mb-14">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+              Fair play guidelines
             </h2>
-            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Switch languages, explore algorithms, and run code directly in your browser.
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+              Simple rules to keep every exam honest and equal.
             </p>
           </div>
 
-          <div class="max-w-4xl mx-auto bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-            <!-- Language Select Tabs & Run CTA -->
-            <div class="flex flex-wrap items-center justify-between px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 gap-3">
-              <div class="flex items-center gap-1">
-                <button
-                  v-for="lang in (['python', 'cpp', 'java', 'javascript'] as const)"
-                  :key="lang"
-                  class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer"
-                  :class="activeLang === lang ? 'bg-primary text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
-                  @click="activeLang = lang"
-                >
-                  {{ lang.toUpperCase() }}
-                </button>
-              </div>
-
-              <button
-                class="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold font-mono flex items-center gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer transition-all active:scale-95"
-                :disabled="isRunningDemo"
-                @click="runDemoCode"
-              >
-                <span class="material-symbols-outlined text-[16px]" :class="{ 'animate-spin': isRunningDemo }">
-                  {{ isRunningDemo ? 'refresh' : 'play_arrow' }}
-                </span>
-                <span>{{ isRunningDemo ? 'Executing…' : 'Run Test Cases' }}</span>
-              </button>
-            </div>
-
-            <!-- Code Body -->
-            <div class="p-5 font-mono text-xs leading-relaxed text-slate-200 bg-[#090d13] overflow-x-auto">
-              <pre><code>{{ codeSnippets[activeLang] }}</code></pre>
-            </div>
-
-            <!-- Output Console Bar -->
-            <div class="px-5 py-4 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-              <div class="flex items-center gap-2">
-                <span class="text-slate-500 font-bold">Output:</span>
-                <span v-if="demoOutputReady" class="text-emerald-400 font-semibold flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px]">task_alt</span>
-                  Accepted · Max Subarray Sum = 6 (Execution: 14ms)
-                </span>
-                <span v-else class="text-amber-400 animate-pulse">Running Judge0 batch container…</span>
-              </div>
-              <span class="text-slate-500 text-[11px]">Memory: 14.4MB · Exit code: 0</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <!-- HOW IT WORKS CANDIDATE PIPELINE (#how-it-works)                 -->
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <section id="how-it-works" class="py-20 md:py-28 max-w-[1240px] mx-auto px-4 sm:px-6">
-        <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200">
-            <span class="material-symbols-outlined text-[14px]">route</span>
-            Smooth Journey
-          </div>
-          <h2 class="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-            How The Assessment Runs
-          </h2>
-          <p class="text-sm text-slate-600 dark:text-slate-400">
-            A frictionless candidate experience designed for focus, speed, and zero confusion.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-          <div
-            v-for="(step, i) in journeySteps"
-            :key="i"
-            class="journey-step-card"
-          >
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-3xl font-black text-primary/40 dark:text-primary/60 font-mono">{{ step.step }}</span>
-              <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary dark:text-slate-200 border border-primary/20 flex items-center justify-center">
-                <span class="material-symbols-outlined text-[20px]">{{ step.icon }}</span>
-              </div>
-            </div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">
-              {{ step.title }}
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              {{ step.desc }}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <!-- OFFICIAL RULES (#rules)                                         -->
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <section id="rules" class="py-20 bg-slate-100/70 dark:bg-[#0d1117]/80 border-t border-slate-200 dark:border-white/[0.06]">
-        <div class="max-w-[1240px] mx-auto px-4 sm:px-6">
-          <div class="text-center max-w-2xl mx-auto mb-14 space-y-3">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200">
-              <span class="material-symbols-outlined text-[14px]">gavel</span>
-              Integrity Standards
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Assessment Code of Conduct
-            </h2>
-            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Please review our strict assessment parameters to ensure fair and accredited evaluation.
-            </p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
             <div
-              v-for="(rule, i) in platformRules"
+              v-for="(rule, i) in rules"
               :key="i"
               class="rule-card"
             >
-              <div class="w-8 h-8 rounded-lg bg-primary text-white font-mono font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-md shadow-primary/20">
+              <span class="w-7 h-7 rounded-lg bg-primary/8 dark:bg-primary/10 text-primary dark:text-primary text-xs font-bold font-mono flex items-center justify-center flex-shrink-0">
                 {{ rule.num }}
-              </div>
+              </span>
               <div>
-                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">
-                  {{ rule.title }}
-                </h4>
-                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {{ rule.desc }}
-                </p>
+                <h4 class="text-sm font-semibold text-slate-900 dark:text-white mb-0.5">{{ rule.title }}</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{{ rule.desc }}</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <!-- BOTTOM CALL TO ACTION                                            -->
-      <!-- ════════════════════════════════════════════════════════════════ -->
-      <section class="py-20 md:py-24 max-w-[1240px] mx-auto px-4 sm:px-6">
-        <div class="cta-banner">
-          <div class="relative z-10 max-w-2xl mx-auto text-center space-y-5">
-            <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
-              Ready for Your Next Coding Milestone?
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- BOTTOM CTA                                                    -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <section class="py-20 md:py-24">
+        <div class="max-w-[1100px] mx-auto px-5 sm:px-8">
+          <div class="cta-card">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">
+              Ready to run your first exam?
             </h2>
-            <p class="text-sm sm:text-base text-slate-300">
-              Jump into active challenges, track your ranking live on the ICPC scoreboard, and prove your engineering mastery.
+            <p class="text-base text-white/70 mb-8 max-w-md mx-auto">
+              Set up in minutes. No credit card required.
             </p>
-            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-              <button
-                class="px-6 py-3 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-sm shadow-xl transition-all active:scale-95 cursor-pointer flex items-center gap-2"
-                @click="scrollTo('contests')"
-              >
-                <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
-                <span>Enter Contests</span>
-              </button>
+            <div class="flex flex-wrap items-center justify-center gap-3">
               <router-link
-                to="/login"
-                class="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm transition-all"
+                v-if="!authStore.isAuthenticated"
+                to="/register"
+                class="px-6 py-3 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-semibold text-sm transition-all active:scale-95 cursor-pointer no-underline"
               >
-                Sign In to Account
+                Get Started Free
               </router-link>
+              <router-link
+                v-else
+                to="/dashboard"
+                class="px-6 py-3 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-semibold text-sm transition-all active:scale-95 cursor-pointer no-underline"
+              >
+                Go to Dashboard
+              </router-link>
+              <button
+                class="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-sm transition-all cursor-pointer"
+                @click="scrollTo('sandbox')"
+              >
+                Try the editor
+              </button>
             </div>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- ── SaaS Footer ─────────────────────────────────────────────────── -->
-    <footer class="relative z-10 border-t border-slate-200 dark:border-white/[0.06] py-8 px-4 sm:px-6 bg-white/80 dark:bg-[#07090d]/80 backdrop-blur-md">
-      <div class="max-w-[1240px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+    <!-- ── Footer ─────────────────────────────────────────────────────── -->
+    <footer class="relative z-10 border-t border-slate-200/60 dark:border-white/[0.04] py-8 px-5 sm:px-8 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md">
+      <div class="max-w-[1100px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
         <div class="flex items-center gap-3">
           <img
             :src="brand.logoPath"
             :alt="brand.appName"
-            class="h-6 object-contain"
-            style="filter: drop-shadow(0 0 6px rgb(var(--color-primary)))"
+            class="h-5 object-contain"
+            style="filter: drop-shadow(0 0 4px rgb(var(--color-primary) / 0.4))"
           />
-          <span class="font-bold text-slate-800 dark:text-slate-200">{{ brand.appName }}</span>
-          <span>·</span>
-          <span>© {{ new Date().getFullYear() }} All Rights Reserved.</span>
+          <span class="font-semibold text-slate-700 dark:text-slate-300">{{ brand.appName }}</span>
+          <span class="text-slate-300 dark:text-slate-700">·</span>
+          <span>© {{ new Date().getFullYear() }}</span>
         </div>
 
         <div class="flex items-center gap-4">
-          <div class="flex items-center gap-1.5 text-emerald-500 font-bold text-[11px]">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            All Systems Operational
+          <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-500 text-[11px] font-medium">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            All systems operational
           </div>
-          <span>·</span>
-          <router-link to="/admin/login" class="hover:text-primary dark:hover:text-white transition-colors">
-            Admin Portal
+          <span class="text-slate-300 dark:text-slate-700">·</span>
+          <router-link to="/admin/login" class="hover:text-primary dark:hover:text-primary transition-colors">
+            Admin
           </router-link>
         </div>
       </div>
@@ -916,106 +788,144 @@ const platformRules = [
 </template>
 
 <style scoped>
-/* ── Ambient Glows ── */
-.ambient-glow {
+/* ── Hero Background ── */
+.hero-gradient {
   position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 900px;
   border-radius: 50%;
-  filter: blur(100px);
+  background: radial-gradient(circle, rgb(var(--color-primary) / 0.08) 0%, transparent 70%);
   pointer-events: none;
 }
-.glow-1 {
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgb(var(--color-primary) / 0.25) 0%, transparent 70%);
-  top: -200px;
-  left: -150px;
-}
-.glow-2 {
-  width: 700px;
-  height: 700px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 70%);
-  bottom: 10%;
-  right: -200px;
-}
-.glow-3 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgb(var(--color-primary) / 0.15) 0%, transparent 70%);
-  top: 40%;
-  left: 20%;
+.dark .hero-gradient {
+  background: radial-gradient(circle, rgb(var(--color-primary) / 0.12) 0%, transparent 70%);
 }
 
-.dot-grid {
-  background-image: radial-gradient(circle, currentColor 1.5px, transparent 1.5px);
-  background-size: 24px 24px;
-}
-
-/* ── Typography & Gradients ── */
+/* ── Typography ── */
 .hero-gradient-text {
-  background: linear-gradient(135deg, rgb(var(--color-primary)) 0%, #8b5cf6 50%, #38bdf8 100%);
+  background: linear-gradient(135deg, rgb(var(--color-primary)) 0%, #a855f7 50%, #6366f1 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
+/* ── Pill ── */
+.pill {
+  @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium
+         bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.06]
+         text-slate-600 dark:text-slate-400;
+}
+
+/* ── Nav Links ── */
+.nav-link {
+  @apply text-[13px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer;
+}
+.mobile-nav-link {
+  @apply text-left text-sm font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer;
+}
+
 /* ── Buttons ── */
-.btn-hero-primary {
-  @apply inline-flex items-center gap-2.5 h-12 px-6 rounded-xl bg-primary hover:bg-primary/90
-         text-white font-bold text-sm shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35
-         transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+.btn-primary {
+  @apply inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-primary hover:bg-primary/90
+         text-white font-semibold text-sm shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30
+         transition-all active:scale-[0.97] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-ghost {
+  @apply inline-flex items-center gap-2 h-11 px-5 rounded-xl
+         text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white
+         font-medium text-sm transition-all cursor-pointer hover:bg-slate-100 dark:hover:bg-white/[0.04];
 }
 
-.btn-hero-secondary {
-  @apply inline-flex items-center gap-2 h-12 px-5 rounded-xl bg-white dark:bg-white/[0.04]
-         border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/[0.08]
-         text-slate-800 dark:text-slate-200 font-bold text-sm transition-all active:scale-95 no-underline cursor-pointer;
+/* ── Hero Mockup ── */
+.hero-mockup {
+  @apply relative rounded-2xl overflow-hidden border border-slate-200/60 dark:border-white/[0.08] shadow-2xl shadow-slate-200/50 dark:shadow-black/30;
+}
+.hero-mockup-glow {
+  @apply absolute -inset-4 rounded-3xl pointer-events-none;
+  background: radial-gradient(ellipse at 50% 0%, rgb(var(--color-primary) / 0.12), transparent 70%);
+  filter: blur(40px);
 }
 
-/* ── Cards & Bento ── */
-.metric-card {
-  @apply p-4 rounded-2xl bg-white/70 dark:bg-[#161b22]/70 border border-slate-200 dark:border-slate-800/80
-         backdrop-blur-md flex flex-col items-center justify-center text-center gap-1 shadow-sm;
+/* ── Feature Cards ── */
+.feature-card {
+  @apply p-7 rounded-2xl bg-white dark:bg-[#18181b]/80 border border-slate-200/60 dark:border-white/[0.06]
+         transition-all duration-200 hover:shadow-lg hover:shadow-slate-200/40 dark:hover:shadow-none
+         hover:border-slate-300 dark:hover:border-white/[0.1];
+}
+.extra-feature-card {
+  @apply p-5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/40 dark:border-white/[0.04]
+         flex flex-col;
 }
 
-.hero-glow-box {
-  @apply absolute -inset-1 rounded-3xl opacity-50 blur-xl pointer-events-none;
-  background: linear-gradient(135deg, rgb(var(--color-primary) / 0.4), rgba(99, 102, 241, 0.2), transparent);
+/* ── Demo Editor ── */
+.demo-editor {
+  @apply rounded-2xl overflow-hidden border border-slate-200/60 dark:border-white/[0.08] shadow-xl shadow-slate-200/30 dark:shadow-black/20;
+}
+.lang-tab {
+  @apply px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer
+         text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04];
+}
+.lang-tab--active {
+  @apply bg-primary text-white hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white shadow-sm;
+}
+.run-btn {
+  @apply px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold
+         flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95
+         disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
-.exam-hub-card {
-  @apply flex flex-col p-6 rounded-2xl bg-white dark:bg-[#161b22]/90 border border-slate-200 dark:border-slate-800
-         hover:border-primary/40 dark:hover:border-primary/40 transition-all duration-200 shadow-sm hover:shadow-xl hover:shadow-primary/5;
+/* ── Step Cards ── */
+.step-card {
+  @apply p-6 rounded-2xl bg-white dark:bg-[#18181b]/60 border border-slate-200/60 dark:border-white/[0.04];
 }
 
+/* ── Exam Cards ── */
+.exam-card {
+  @apply flex flex-col p-6 rounded-2xl bg-white dark:bg-[#18181b]/80 border border-slate-200/60 dark:border-white/[0.06]
+         hover:border-primary/30 dark:hover:border-primary/20 transition-all duration-200;
+}
 .status-pill {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider;
 }
 .status-pill--live {
-  @apply bg-emerald-500/15 border border-emerald-500/30 text-emerald-500;
+  @apply bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400;
 }
 .status-pill--upcoming {
-  @apply bg-amber-500/15 border border-amber-500/30 text-amber-500;
+  @apply bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400;
 }
 
-.bento-card {
-  @apply flex flex-col p-6 rounded-2xl bg-white dark:bg-[#161b22]/70 border border-slate-200 dark:border-slate-800/80
-         hover:border-primary/40 dark:hover:border-primary/40 transition-all duration-200 shadow-sm hover:shadow-lg backdrop-blur-md;
-}
-
-.journey-step-card {
-  @apply p-6 rounded-2xl bg-white dark:bg-[#161b22]/70 border border-slate-200 dark:border-slate-800/80
-         flex flex-col shadow-sm;
-}
-
+/* ── Rule Cards ── */
 .rule-card {
-  @apply flex items-start gap-4 p-5 rounded-2xl bg-white dark:bg-[#161b22]/70 border border-slate-200 dark:border-slate-800/80
-         shadow-sm;
+  @apply flex items-start gap-3 p-5 rounded-xl bg-white dark:bg-[#18181b]/60 border border-slate-200/60 dark:border-white/[0.04];
 }
 
-.cta-banner {
-  @apply relative p-10 md:p-14 rounded-3xl overflow-hidden shadow-2xl;
-  background: linear-gradient(135deg, rgb(var(--color-primary)) 0%, #4c1d95 60%, #1e1b4b 100%);
+/* ── CTA Card ── */
+.cta-card {
+  @apply relative text-center p-12 md:p-16 rounded-3xl overflow-hidden;
+  background: linear-gradient(145deg, rgb(var(--color-primary)) 0%, #4c1d95 50%, #1e1b4b 100%);
 }
+
+/* ── Animations ── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out both;
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.7s ease-out both;
+}
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.35s; }
 
 /* ── Mobile menu transition ── */
 .slide-enter-active,
