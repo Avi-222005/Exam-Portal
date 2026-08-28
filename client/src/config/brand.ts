@@ -4,6 +4,6 @@ export const brand = {
   logoPath: (import.meta.env.VITE_LOGO_PATH as string) || '/logo.webp',
   apiTitle: (import.meta.env.VITE_API_TITLE as string) || 'API Reference',
   apiVersion: (import.meta.env.VITE_API_VERSION as string) || 'v1.0',
-  primaryColor: (import.meta.env.VITE_PRIMARY_COLOR as string) || '#5E17EB',
+  primaryColor: (import.meta.env.VITE_PRIMARY_COLOR as string) || '#6518ff',
   accentColor: (import.meta.env.VITE_ACCENT_COLOR as string) || '#2eb392',
 } as const;
