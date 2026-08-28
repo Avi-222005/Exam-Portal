@@ -14,24 +14,9 @@ const authStore = useAuthStore();
 const mobileMenuOpen = ref(false);
 const entering = ref(false);
 const loading = ref(true);
-const pickedExam = ref<Exam | null>(null);
 
-// The exam being viewed on the countdown/enter screen
-const viewingExam = computed(() => pickedExam.value ?? examStore.activeExam);
-
-// Show the exam picker when there are multiple exams and none picked yet
-const showExamPicker = computed(
-  () => !loading.value && examStore.activeExams.length > 1 && !pickedExam.value,
-);
-
-function pickExam(exam: Exam) {
-  pickedExam.value = exam;
-}
-
-function backToPicker() {
-  pickedExam.value = null;
-  stopPreStart();
-}
+// The exam currently featured in the hero
+const viewingExam = computed(() => examStore.activeExam || examStore.activeExams[0] || null);
 
 // --- Pre-start countdown ---
 const preStartRemaining = ref('--:--:--');
@@ -88,15 +73,12 @@ onMounted(async () => {
 
 onUnmounted(stopPreStart);
 
-const examDate = computed(() => {
-  const exam = viewingExam.value;
-  if (!exam) return null;
+function formatSchedule(exam: Exam): string {
   const start = new Date(exam.startTime);
   const end = new Date(exam.endTime);
   const dateStr = start.toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
-    year: 'numeric',
   });
   const startTime = start
     .toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
@@ -105,27 +87,17 @@ const examDate = computed(() => {
     .toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
     .replace(/\b(am|pm)\b/gi, (m) => m.toUpperCase());
   return `${dateStr} · ${startTime} – ${endTime}`;
-});
+}
 
-const examDuration = computed(() => {
-  const exam = viewingExam.value;
-  if (!exam) return null;
-  const h = Math.floor(exam.durationMinutes / 60);
-  const m = exam.durationMinutes % 60;
-  if (h > 0 && m > 0) return `${h}h ${m}min`;
-  if (h > 0) return `${h} hour${h > 1 ? 's' : ''}`;
-  return `${m} minutes`;
-});
-
-async function enterContest() {
-  const exam = viewingExam.value;
-  if (!exam) return;
-  examStore.selectExam(exam);
+async function enterContest(examParam?: Exam) {
+  const target = examParam || viewingExam.value;
+  if (!target) return;
+  examStore.selectExam(target);
   entering.value = true;
   try {
     await router.push({
       name: 'workspace',
-      params: { id: exam.id },
+      params: { id: target.id },
     });
   } finally {
     entering.value = false;
@@ -138,157 +110,264 @@ function scrollTo(id: string) {
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
-const steps = [
+// ── Interactive Playground State ──────────────────────────────────────────
+const activeLang = ref<'python' | 'cpp' | 'java' | 'javascript'>('python');
+const isRunningDemo = ref(false);
+const demoOutputReady = ref(true);
+
+const codeSnippets = {
+  python: `def max_subarray_sum(nums: list[int]) -> int:
+    # Kadane's Algorithm for optimal O(N) evaluation
+    max_so_far = current_max = nums[0]
+    for x in nums[1:]:
+        current_max = max(x, current_max + x)
+        max_so_far = max(max_so_far, current_max)
+    return max_so_far
+
+# Run test cases
+print(max_subarray_sum([-2, 1, -3, 4, -1, 2, 1, -5, 4])) # Output: 6`,
+
+  cpp: `#include <vector>
+#include <algorithm>
+#include <iostream>
+
+int maxSubArray(const std::vector<int>& nums) {
+    int maxSoFar = nums[0], currentMax = nums[0];
+    for (size_t i = 1; i < nums.size(); ++i) {
+        currentMax = std::max(nums[i], currentMax + nums[i]);
+        maxSoFar = std::max(maxSoFar, currentMax);
+    }
+    return maxSoFar;
+}`,
+
+  java: `class Solution {
+    public int maxSubArray(int[] nums) {
+        int maxSoFar = nums[0];
+        int currentMax = nums[0];
+        for (int i = 1; i < nums.length; i++) {
+            currentMax = Math.max(nums[i], currentMax + nums[i]);
+            maxSoFar = Math.max(maxSoFar, currentMax);
+        }
+        return maxSoFar;
+    }
+}`,
+
+  javascript: `function maxSubArray(nums) {
+    let maxSoFar = nums[0];
+    let currentMax = nums[0];
+    for (let i = 1; i < nums.length; i++) {
+        currentMax = Math.max(nums[i], currentMax + nums[i]);
+        maxSoFar = Math.max(maxSoFar, currentMax);
+    }
+    return maxSoFar;
+}`,
+};
+
+function runDemoCode() {
+  isRunningDemo.value = true;
+  demoOutputReady.value = false;
+  setTimeout(() => {
+    isRunningDemo.value = false;
+    demoOutputReady.value = true;
+  }, 600);
+}
+
+// ── Feature Bento Data ───────────────────────────────────────────────────
+const bentoFeatures = [
   {
-    icon: 'person_add',
-    title: 'Register & Login',
-    desc: 'Create your account, then authenticate to receive an access token for all subsequent requests.',
+    icon: 'terminal',
+    title: 'Isolated Judge0 Sandbox',
+    tag: 'High Performance',
+    desc: 'Code runs in dedicated sandbox containers with sub-second execution, memory thresholds, and strict isolation.',
+    highlight: '15+ Compilers',
   },
   {
-    icon: 'how_to_reg',
-    title: 'Enroll in the Exam',
-    desc: 'Enrollment is required before the exam window opens - without it, problems and submissions are inaccessible.',
+    icon: 'shield',
+    title: 'Anti-Cheat Proctoring',
+    tag: 'Integrity Guard',
+    desc: 'Fullscreen enforcement, clipboard isolation, focus monitoring, and audit logs prevent unfair advantages.',
+    highlight: 'Zero Plagiarism',
   },
   {
-    icon: 'menu_book',
-    title: 'Explore & Fetch Problems',
-    desc: 'Study the API docs carefully, then retrieve the problem set once the exam window is active.',
+    icon: 'leaderboard',
+    title: 'Real-Time ICPC Scoring',
+    tag: 'Live Standings',
+    desc: 'Sub-second rank updates driven by PostgreSQL materialized views with deterministic penalty scoring.',
+    highlight: 'O(1) Rank Queries',
   },
   {
-    icon: 'code',
-    title: 'Write Code',
-    desc: 'Solve each problem in the built-in code editor using any of the supported languages.',
+    icon: 'quiz',
+    title: 'Hybrid Assessment Suite',
+    tag: 'Versatile',
+    desc: 'Create mixed tests with algorithmic programming problems, multi-choice questions (MCQs), and custom test suites.',
+    highlight: 'Coding + MCQ',
   },
   {
-    icon: 'publish',
-    title: 'Test & Submit',
-    desc: 'Run against sample cases, then submit for full grading against all hidden test cases.',
+    icon: 'cloud_sync',
+    title: 'Resilient Autosave',
+    tag: 'Zero Data Loss',
+    desc: 'Every keystroke and code draft is debounced and synchronized to the server automatically.',
+    highlight: 'Real-Time Sync',
+  },
+  {
+    icon: 'palette',
+    title: 'White-Label Theming',
+    tag: 'Brand Ready',
+    desc: 'Easily customize platform branding, colors, logos, titles, and certificates via environment variables.',
+    highlight: 'Full Control',
   },
 ];
 
-const details = [
+// ── Candidate Journey Steps ──────────────────────────────────────────────
+const journeySteps = [
   {
-    title: 'First 15 Minutes - Read & Prepare',
-    desc: 'Use the opening window to go through the rules, API docs, and understand the contest flow before coding.',
+    step: '01',
+    icon: 'badge',
+    title: 'Authenticate & Register',
+    desc: 'Candidates sign in securely via roll number or email credentials with instant JWT authorization.',
   },
   {
-    title: 'Start When Ready',
-    desc: 'Once you understand the flow, begin solving problems at your own pace within the allotted time.',
+    step: '02',
+    icon: 'fullscreen',
+    title: 'Proctored Lock-In',
+    desc: 'A secure full-screen assessment environment activates, isolating the editor and preventing external leakage.',
   },
   {
-    title: 'Time-based Scoring',
-    desc: 'Scoring factors in correctness and speed. Faster accepted solutions rank higher on the leaderboard.',
+    step: '03',
+    icon: 'code_blocks',
+    title: 'Monaco IDE & Run Tests',
+    desc: 'Solve challenges with VSCode-quality editor, syntax highlighting, sample testing, and starter code.',
   },
   {
-    title: 'Top Performers Shortlisted',
-    desc: 'Top performers will be shortlisted for the next round of technical interviews.',
+    step: '04',
+    icon: 'military_tech',
+    title: 'Automated ICPC Verdict',
+    desc: 'Submissions are verified against hidden test suites and immediately ranked on the real-time leaderboard.',
   },
 ];
 
-const rules = [
+// ── Official Rules ───────────────────────────────────────────────────────
+const platformRules = [
   {
     num: '01',
-    title: 'Individual Contest',
-    desc: 'Solo competition only. No collaboration, discussion, or external help is allowed.',
+    title: 'Individual & Solo Work Only',
+    desc: 'No collaboration, screen sharing, or third-party consultation is permitted during assessment sessions.',
   },
   {
     num: '02',
-    title: 'No External Tabs or AI Tools',
-    desc: 'Do not use other browser tabs, AI assistants, or any external tools during the contest.',
+    title: 'Restricted External Paste Policy',
+    desc: 'The Monaco editor blocks pasting code from external applications, websites, and external tabs.',
   },
   {
     num: '03',
-    title: 'Plagiarism Check',
-    desc: 'All submissions are checked post-event. Any matches result in immediate disqualification.',
+    title: 'Fullscreen Violation Thresholds',
+    desc: 'Exiting fullscreen or switching focus triggers security warnings and logs violation timestamps.',
   },
   {
     num: '04',
-    title: 'Immediate Removal',
-    desc: 'Screen sharing, AI usage, or browsing other tabs will result in removal from the contest.',
+    title: 'Server-Synchronized Time Limits',
+    desc: 'Contest timers synchronize with the atomic server clock to guarantee an unbiased, accurate countdown.',
   },
 ];
 </script>
 
 <template>
   <div
-    class="relative flex w-full flex-col overflow-y-auto overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 transition-colors duration-300"
-    style="height: 100%"
+    class="relative flex w-full flex-col overflow-y-auto overflow-x-hidden bg-background-light dark:bg-[#0a0c10] font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen"
   >
-    <!-- ── Ambient Background Layer ───────────────────────────────────── -->
-    <div
-      class="fixed inset-0 z-0 overflow-hidden pointer-events-none"
-      aria-hidden="true"
-    >
-      <div
-        class="absolute inset-0 dot-grid opacity-[0.12] dark:opacity-[0.07]"
-      ></div>
-      <div class="blob blob-1"></div>
-      <div class="blob blob-2"></div>
-      <div class="blob blob-3"></div>
+    <!-- ── Ambient Glow & Grid Layer ───────────────────────────────────── -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <div class="absolute inset-0 dot-grid opacity-[0.08] dark:opacity-[0.04]"></div>
+      <div class="ambient-glow glow-1"></div>
+      <div class="ambient-glow glow-2"></div>
+      <div class="ambient-glow glow-3"></div>
     </div>
 
     <!-- ── Header ─────────────────────────────────────────────────────── -->
     <AppHeader>
       <template #nav>
         <button
-          class="text-sm font-medium hover:text-primary transition-colors cursor-pointer"
+          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
+          @click="scrollTo('contests')"
+        >
+          Live Contests
+        </button>
+        <button
+          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
+          @click="scrollTo('features')"
+        >
+          Features
+        </button>
+        <button
+          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
+          @click="scrollTo('sandbox')"
+        >
+          Interactive IDE
+        </button>
+        <button
+          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
           @click="scrollTo('how-it-works')"
         >
           How It Works
         </button>
         <button
-          class="text-sm font-medium hover:text-primary transition-colors cursor-pointer"
-          @click="scrollTo('details')"
-        >
-          Details
-        </button>
-        <button
-          class="text-sm font-medium hover:text-primary transition-colors cursor-pointer"
+          class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white transition-colors cursor-pointer"
           @click="scrollTo('rules')"
         >
           Rules
         </button>
       </template>
+
       <template #mobile-toggle>
         <button
-          class="md:hidden text-slate-600 dark:text-slate-300"
+          class="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
           @click="mobileMenuOpen = !mobileMenuOpen"
         >
-          <span class="material-symbols-outlined">{{
-            mobileMenuOpen ? 'close' : 'menu'
-          }}</span>
+          <span class="material-symbols-outlined text-[20px]">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
         </button>
       </template>
     </AppHeader>
 
-    <!-- ── Mobile Menu ─────────────────────────────────────────────────── -->
+    <!-- ── Mobile Slide Navigation ─────────────────────────────────────── -->
     <Transition name="slide">
       <div
         v-if="mobileMenuOpen"
-        class="md:hidden fixed inset-x-0 top-[57px] z-40 bg-white/95 dark:bg-accent-navy/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4 shadow-xl"
+        class="md:hidden fixed inset-x-0 top-[49px] z-40 bg-white/95 dark:bg-[#0d1117]/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/[0.08] p-5 flex flex-col gap-3 shadow-2xl"
       >
         <router-link
           v-if="authStore.isAuthenticated"
           to="/dashboard"
-          class="text-sm font-bold text-primary py-2 flex items-center gap-1"
+          class="flex items-center gap-2 text-xs font-bold text-primary py-2"
         >
-          <span class="material-symbols-outlined text-[16px]">dashboard</span>
-          My Dashboard
+          <span class="material-symbols-outlined text-[18px]">dashboard</span>
+          Student Dashboard
         </router-link>
         <button
-          class="text-sm font-medium py-2 hover:text-primary text-left"
+          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
+          @click="scrollTo('contests')"
+        >
+          Live Contests
+        </button>
+        <button
+          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
+          @click="scrollTo('features')"
+        >
+          Features
+        </button>
+        <button
+          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
+          @click="scrollTo('sandbox')"
+        >
+          Interactive IDE
+        </button>
+        <button
+          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
           @click="scrollTo('how-it-works')"
         >
           How It Works
         </button>
         <button
-          class="text-sm font-medium py-2 hover:text-primary text-left"
-          @click="scrollTo('details')"
-        >
-          Details
-        </button>
-        <button
-          class="text-sm font-medium py-2 hover:text-primary text-left"
+          class="text-left text-xs font-semibold py-2 text-slate-700 dark:text-slate-300 hover:text-primary"
           @click="scrollTo('rules')"
         >
           Rules
@@ -296,614 +375,476 @@ const rules = [
       </div>
     </Transition>
 
-    <main class="relative z-10 flex-1 overflow-y-auto">
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <!-- HERO                                                          -->
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <section class="max-w-[1200px] mx-auto px-6 py-16 md:py-28">
-        <div class="flex flex-col gap-12 lg:flex-row lg:items-center lg:gap-16">
-          <!-- Left: Text -->
-          <div class="flex flex-col gap-6 flex-1 min-w-0">
-            <!-- Loading skeleton -->
+    <main class="relative z-10 flex-1">
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <!-- HERO SECTION                                                     -->
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <section class="max-w-[1240px] mx-auto px-4 sm:px-6 pt-12 md:pt-20 pb-16 md:pb-24">
+        <!-- Top Pill Badge -->
+        <div class="flex justify-center mb-6">
+          <div
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 dark:bg-primary/15 border border-primary/30 text-xs font-semibold text-primary dark:text-slate-200 shadow-sm backdrop-blur-md"
+          >
+            <span class="flex h-2 w-2 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+            </span>
+            <span>Next-Gen Technical Assessment Platform · {{ brand.appName }} v1.0</span>
+          </div>
+        </div>
+
+        <!-- Main Headline & Subtitle -->
+        <div class="text-center max-w-4xl mx-auto mb-10 space-y-4">
+          <h1
+            class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] text-slate-900 dark:text-white"
+          >
+            Assess Engineers With
+            <span class="hero-gradient-text block sm:inline"> Precision & Integrity</span>
+          </h1>
+          <p class="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            A production-grade online examination platform built with isolated Judge0 execution, Monaco IDE, strict
+            proctoring guards, and real-time ICPC leaderboards.
+          </p>
+
+          <!-- Dual CTA Buttons -->
+          <div class="flex flex-wrap items-center justify-center gap-3 pt-4">
             <template v-if="loading">
-              <div class="flex flex-col gap-4">
-                <div
-                  class="h-5 w-36 bg-slate-200 dark:bg-slate-800 animate-pulse"
-                  style="border-radius: 6px"
-                />
-                <div
-                  class="h-16 w-4/5 bg-slate-200 dark:bg-slate-800 animate-pulse"
-                  style="border-radius: 8px"
-                />
-                <div
-                  class="h-16 w-3/5 bg-slate-200 dark:bg-slate-800 animate-pulse"
-                  style="border-radius: 8px"
-                />
-                <div
-                  class="h-5 w-full bg-slate-200 dark:bg-slate-800 animate-pulse"
-                  style="border-radius: 6px"
-                />
-                <div
-                  class="h-5 w-2/3 bg-slate-200 dark:bg-slate-800 animate-pulse"
-                  style="border-radius: 6px"
-                />
-                <div
-                  class="h-14 w-48 bg-slate-200 dark:bg-slate-800 animate-pulse"
-                  style="border-radius: 10px"
-                />
-              </div>
+              <div class="h-12 w-44 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
             </template>
-
-            <!-- Exam picker: multiple active exams -->
-            <template v-else-if="showExamPicker">
-              <div class="flex flex-col gap-5">
-                <h1
-                  class="text-5xl md:text-7xl font-black leading-[1.05] tracking-tight"
-                >
-                  Choose Your<br />
-                  <span class="text-primary">Contest</span>
-                </h1>
-                <p class="text-lg text-slate-500 max-w-lg leading-relaxed">
-                  Multiple contests are available. Select one to view details
-                  and enter.
-                </p>
-              </div>
-
-              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl max-h-[60vh] overflow-y-auto pr-1">
-                <button
-                  v-for="exam in examStore.activeExams"
-                  :key="exam.id"
-                  class="flex flex-col gap-3 p-5 text-left bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 cursor-pointer group"
-                  style="border-radius: 12px"
-                  @click="pickExam(exam)"
-                >
-                  <div class="flex items-center justify-between w-full">
-                    <div
-                      v-if="
-                        dayjs(exam.startTime).valueOf() >
-                        Date.now() + examStore.serverDrift
-                      "
-                      class="inline-flex items-center gap-1.5 px-2 py-1 bg-amber-500/10 border border-amber-500/25 text-[10px] font-bold uppercase tracking-widest text-amber-500"
-                      style="border-radius: 4px"
-                    >
-                      <span
-                        class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"
-                      ></span>
-                      Upcoming
-                    </div>
-                    <div
-                      v-else
-                      class="inline-flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/25 text-[10px] font-bold uppercase tracking-widest text-emerald-500"
-                      style="border-radius: 4px"
-                    >
-                      <span
-                        class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
-                      ></span>
-                      Live
-                    </div>
-                    <span
-                      class="material-symbols-outlined text-[18px] text-slate-300 dark:text-slate-600 group-hover:text-primary transition-colors"
-                      >arrow_forward</span
-                    >
-                  </div>
-                  <h3 class="text-lg font-bold text-slate-900 dark:text-white">
-                    {{ exam.title }}
-                  </h3>
-                  <div
-                    class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400"
-                  >
-                    <span class="flex items-center gap-1">
-                      <span class="material-symbols-outlined text-[13px]"
-                        >schedule</span
-                      >
-                      {{ exam.durationMinutes }}min
-                    </span>
-                    <span class="flex items-center gap-1">
-                      <span class="material-symbols-outlined text-[13px]"
-                        >code</span
-                      >
-                      {{ exam.allowedLanguages?.length ?? 0 }} languages
-                    </span>
-                  </div>
-                </button>
-              </div>
-            </template>
-
-            <!-- No active exam -->
-            <template v-else-if="!viewingExam">
-              <div class="flex flex-col gap-5">
-                <h1
-                  class="text-5xl md:text-7xl font-black leading-[1.05] tracking-tight"
-                >
-                  No Contest<br />
-                  <span class="text-slate-300 dark:text-slate-700"
-                    >Scheduled</span
-                  >
-                </h1>
-                <p class="text-lg text-slate-500 max-w-lg leading-relaxed">
-                  There is no active contest at the moment. Check back later or
-                  contact your administrator.
-                </p>
-              </div>
-            </template>
-
-            <!-- Active exam / Selected exam -->
-            <template v-else>
-              <!-- Back to picker -->
+            <template v-else-if="viewingExam">
               <button
-                v-if="examStore.activeExams.length > 1 && pickedExam"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer -mb-2"
-                @click="backToPicker"
+                class="btn-hero-primary group"
+                :disabled="entering || isUpcoming"
+                @click="() => enterContest()"
               >
-                <span class="material-symbols-outlined text-[16px]"
-                  >arrow_back</span
-                >
-                All Contests
-              </button>
-              <!-- Badge: upcoming vs live -->
-              <div
-                v-if="isUpcoming"
-                class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-amber-500 text-[11px] font-bold uppercase tracking-widest w-fit"
-                style="border-radius: 6px"
-              >
-                <span class="material-symbols-outlined text-[14px]"
-                  >schedule</span
-                >
-                Starting Soon
-              </div>
-              <div
-                v-else
-                class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 dark:bg-primary/15 border border-primary/30 text-primary text-[11px] font-bold uppercase tracking-widest w-fit"
-                style="border-radius: 6px"
-              >
-                <span class="relative flex h-2 w-2">
-                  <span
-                    class="animate-ping absolute inset-0 rounded-full bg-primary opacity-75"
-                  ></span>
-                  <span class="relative rounded-full h-2 w-2 bg-primary"></span>
+                <span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">
+                  {{ isUpcoming ? 'schedule' : 'rocket_launch' }}
                 </span>
-                Live Contest
-              </div>
-
-              <!-- Title -->
-              <div class="flex flex-col gap-3">
-                <h1
-                  class="text-5xl md:text-7xl font-black leading-[1.05] tracking-tight text-slate-900 dark:text-white"
-                >
-                  {{ viewingExam.title }}
-                </h1>
-                <p
-                  class="text-lg text-slate-600 dark:text-slate-400 max-w-lg leading-relaxed"
-                >
-                  Test your API knowledge in a unique coding contest. Read docs,
-                  call endpoints, fetch problems, and solve them - all through
-                  APIs.
-                </p>
-              </div>
-
-              <!-- Pre-start countdown -->
-              <div v-if="isUpcoming" class="flex flex-col gap-2">
-                <p
-                  class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
-                >
-                  Contest starts in
-                </p>
-                <div class="hero-countdown">
-                  {{ preStartRemaining }}
-                </div>
-              </div>
-
-              <!-- CTA -->
-              <div class="flex flex-wrap items-center gap-4">
-                <button
-                  class="inline-flex items-center gap-3 h-14 px-8 bg-primary text-white text-base font-bold hover:bg-primary/90 shadow-[0_0_0_4px_rgb(var(--color-primary)/0.12)] hover:shadow-[0_0_32px_rgb(var(--color-primary)/0.50),_0_0_0_4px_rgb(var(--color-primary)/0.2)] active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:bg-primary cursor-pointer"
-                  style="border-radius: 10px"
-                  :disabled="entering || isUpcoming"
-                  @click="enterContest"
-                >
-                  <span class="material-symbols-outlined text-[20px]"
-                    >rocket_launch</span
-                  >
+                <span>
                   {{
                     entering
-                      ? 'Entering…'
+                      ? 'Launching Workspace…'
                       : isUpcoming
-                        ? 'Contest Not Started'
-                        : 'Enter Contest'
+                        ? `Starts in ${preStartRemaining}`
+                        : 'Enter Live Contest'
                   }}
+                </span>
+                <span v-if="!isUpcoming" class="material-symbols-outlined text-[18px]">arrow_forward</span>
+              </button>
+            </template>
+            <template v-else>
+              <button class="btn-hero-primary" @click="scrollTo('contests')">
+                <span class="material-symbols-outlined text-[20px]">explore</span>
+                <span>Explore Contests</span>
+              </button>
+            </template>
+
+            <router-link
+              v-if="authStore.isAuthenticated"
+              to="/dashboard"
+              class="btn-hero-secondary"
+            >
+              <span class="material-symbols-outlined text-[18px]">dashboard</span>
+              <span>Student Dashboard</span>
+            </router-link>
+            <button
+              v-else
+              class="btn-hero-secondary"
+              @click="scrollTo('sandbox')"
+            >
+              <span class="material-symbols-outlined text-[18px]">code</span>
+              <span>Try Code Sandbox</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Trust Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto mb-14">
+          <div class="metric-card">
+            <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">&lt; 250ms</span>
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Execution Latency</span>
+          </div>
+          <div class="metric-card">
+            <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">15+ Compilers</span>
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Multi-Language Sandbox</span>
+          </div>
+          <div class="metric-card">
+            <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">99.99%</span>
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Evaluation Reliability</span>
+          </div>
+          <div class="metric-card">
+            <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">Air-Tight</span>
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Proctoring Guard</span>
+          </div>
+        </div>
+
+        <!-- Hero IDE Mockup Frame -->
+        <div class="relative max-w-5xl mx-auto">
+          <div class="hero-glow-box"></div>
+          <div class="relative bg-slate-950 border border-slate-800/80 rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Window Top Bar -->
+            <div class="flex items-center justify-between px-4 py-3 bg-slate-900/90 border-b border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-[#ff5f57]/80"></span>
+                <span class="w-3 h-3 rounded-full bg-[#febc2e]/80"></span>
+                <span class="w-3 h-3 rounded-full bg-[#28c840]/80"></span>
+                <span class="ml-2 text-xs font-mono text-slate-400">solution.py — Scorix Monaco Sandbox</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-[10px] font-mono font-bold">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Judge0 Online
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/20 text-slate-200 text-[10px] font-mono font-bold">
+                  🛡️ Guard Active
+                </span>
+              </div>
+            </div>
+
+            <!-- Editor & Verdict Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 font-mono text-xs">
+              <!-- Left: Code Editor Window -->
+              <div class="lg:col-span-7 p-5 bg-[#090d13] text-slate-300 border-b lg:border-b-0 lg:border-r border-slate-800/80 space-y-1">
+                <div class="text-slate-600 select-none">1  <span class="text-purple-400 font-bold">def</span> <span class="text-sky-300">maxSubArray</span>(nums: <span class="text-emerald-400">list[int]</span>) -> <span class="text-emerald-400">int</span>:</div>
+                <div class="text-slate-600 select-none">2      <span class="text-slate-500 italic"># Kadane's dynamic optimization</span></div>
+                <div class="text-slate-600 select-none">3      max_sum = cur_sum = nums[<span class="text-amber-300">0</span>]</div>
+                <div class="text-slate-600 select-none">4      <span class="text-purple-400 font-bold">for</span> x <span class="text-purple-400 font-bold">in</span> nums[<span class="text-amber-300">1</span>:]:</div>
+                <div class="text-slate-600 select-none">5          cur_sum = <span class="text-sky-300">max</span>(x, cur_sum + x)</div>
+                <div class="text-slate-600 select-none">6          max_sum = <span class="text-sky-300">max</span>(max_sum, cur_sum)</div>
+                <div class="text-slate-600 select-none">7      <span class="text-purple-400 font-bold">return</span> max_sum</div>
+                <div class="text-slate-600 select-none">8  </div>
+                <div class="text-slate-600 select-none">9  <span class="text-slate-500 italic"># Automated test execution</span></div>
+                <div class="text-slate-600 select-none">10 print(maxSubArray([-2, 1, -3, 4, -1, 2, 1, -5, 4]))</div>
+              </div>
+
+              <!-- Right: Execution Verdicts & Live Rank Preview -->
+              <div class="lg:col-span-5 p-5 bg-slate-950 flex flex-col justify-between gap-4">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-2">
+                    <span class="font-bold uppercase tracking-wider text-slate-300">Test Case Results</span>
+                    <span class="text-emerald-400 font-bold">3/3 Passed</span>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px]">
+                      <span class="text-emerald-300 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                        Case 1 (Standard input)
+                      </span>
+                      <span class="text-slate-400 font-bold">12ms · 14.2MB</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px]">
+                      <span class="text-emerald-300 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                        Case 2 (Single element)
+                      </span>
+                      <span class="text-slate-400 font-bold">8ms · 14.1MB</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px]">
+                      <span class="text-emerald-300 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                        Case 3 (Large array n=10⁵)
+                      </span>
+                      <span class="text-slate-400 font-bold">24ms · 16.8MB</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Floating Score Banner -->
+                <div class="p-3 rounded-xl bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border border-primary/30 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[20px] text-primary dark:text-slate-100">military_tech</span>
+                    <div>
+                      <div class="text-[11px] font-bold text-white">ICPC Accepted</div>
+                      <div class="text-[10px] text-slate-400">+100 Pts · 0 Penalty</div>
+                    </div>
+                  </div>
+                  <span class="px-2 py-1 rounded bg-primary text-white text-[10px] font-bold uppercase">
+                    Rank #1
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <!-- LIVE CONTESTS SECTION (#contests)                               -->
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <section id="contests" class="py-20 bg-slate-100/70 dark:bg-[#0d1117]/80 border-y border-slate-200 dark:border-white/[0.06]">
+        <div class="max-w-[1240px] mx-auto px-4 sm:px-6">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+            <div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200 mb-3">
+                <span class="material-symbols-outlined text-[14px]">sports_esports</span>
+                Examination Arena
+              </div>
+              <h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                Live & Upcoming Contests
+              </h2>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+              Select an examination to view rules, schedule, allowed runtimes, and enter the proctored assessment.
+            </p>
+          </div>
+
+          <!-- Loading Skeletons -->
+          <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-for="i in 3" :key="i" class="h-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse p-6" />
+          </div>
+
+          <!-- Multiple Active Exams Cards -->
+          <div v-else-if="examStore.activeExams.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div
+              v-for="exam in examStore.activeExams"
+              :key="exam.id"
+              class="exam-hub-card group"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <span
+                  v-if="dayjs(exam.startTime).valueOf() > Date.now() + examStore.serverDrift"
+                  class="status-pill status-pill--upcoming"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  Starting Soon
+                </span>
+                <span v-else class="status-pill status-pill--live">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Live Contest
+                </span>
+
+                <span class="text-xs font-mono text-slate-400 flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">timer</span>
+                  {{ exam.durationMinutes }}m
+                </span>
+              </div>
+
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary dark:group-hover:text-slate-100 transition-colors">
+                {{ exam.title }}
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-6">
+                {{ formatSchedule(exam) }}
+              </p>
+
+              <div class="pt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between gap-3 mt-auto">
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                  <span class="font-bold text-slate-700 dark:text-slate-200">{{ exam.allowedLanguages?.length || 'All' }}</span> Languages
+                </div>
+
+                <button
+                  class="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold shadow-md shadow-primary/20 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                  @click="enterContest(exam)"
+                >
+                  <span>Enter Contest</span>
+                  <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else class="text-center p-12 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl mx-auto space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary dark:text-slate-200 flex items-center justify-center mx-auto">
+              <span class="material-symbols-outlined text-2xl">event_busy</span>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">No Scheduled Contests Currently</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+              There are no active exam windows right now. You can log into your Student Dashboard to review your solved problems and past performance history.
+            </p>
+            <router-link
+              to="/dashboard"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all"
+            >
+              <span>Go to Student Dashboard</span>
+              <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </router-link>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <!-- BENTO FEATURES GRID (#features)                                  -->
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <section id="features" class="py-20 md:py-28 max-w-[1240px] mx-auto px-4 sm:px-6">
+        <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200">
+            <span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+            Engineered For Scale
+          </div>
+          <h2 class="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+            Everything Required for High-Stakes Assessments
+          </h2>
+          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+            From classroom coding challenges to company-wide technical hiring screens, Scorix delivers institutional power.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            v-for="(item, i) in bentoFeatures"
+            :key="i"
+            class="bento-card group"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary dark:text-slate-200 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-[20px]">{{ item.icon }}</span>
+              </div>
+              <span class="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300">
+                {{ item.tag }}
+              </span>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary dark:group-hover:text-slate-100 transition-colors">
+              {{ item.title }}
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+              {{ item.desc }}
+            </p>
+            <div class="mt-auto pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center gap-1.5 text-xs font-bold text-primary dark:text-slate-200">
+              <span>{{ item.highlight }}</span>
+              <span class="material-symbols-outlined text-[14px]">check</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <!-- INTERACTIVE CODE PLAYGROUND (#sandbox)                          -->
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <section id="sandbox" class="py-20 bg-slate-900/40 dark:bg-[#07090d] border-t border-slate-200 dark:border-white/[0.06]">
+        <div class="max-w-[1240px] mx-auto px-4 sm:px-6">
+          <div class="text-center max-w-2xl mx-auto mb-12 space-y-3">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200">
+              <span class="material-symbols-outlined text-[14px]">play_circle</span>
+              Interactive Sandbox
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+              Test Drive the Execution Engine
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              Switch languages, explore algorithms, and run code directly in your browser.
+            </p>
+          </div>
+
+          <div class="max-w-4xl mx-auto bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Language Select Tabs & Run CTA -->
+            <div class="flex flex-wrap items-center justify-between px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 gap-3">
+              <div class="flex items-center gap-1">
+                <button
+                  v-for="lang in (['python', 'cpp', 'java', 'javascript'] as const)"
+                  :key="lang"
+                  class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer"
+                  :class="activeLang === lang ? 'bg-primary text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
+                  @click="activeLang = lang"
+                >
+                  {{ lang.toUpperCase() }}
                 </button>
               </div>
 
-              <!-- Stats chips -->
-              <div class="flex flex-wrap items-center gap-2.5">
-                <div
-                  class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-xs font-medium text-slate-600 dark:text-slate-300"
-                  style="border-radius: 6px"
-                >
-                  <span
-                    class="material-symbols-outlined text-[14px] text-primary"
-                    >calendar_today</span
-                  >
-                  {{ examDate }}
-                </div>
-                <div
-                  class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-xs font-medium text-slate-600 dark:text-slate-300"
-                  style="border-radius: 6px"
-                >
-                  <span
-                    class="material-symbols-outlined text-[14px] text-primary"
-                    >schedule</span
-                  >
-                  {{ examDuration }}
-                </div>
-                <div
-                  v-if="!isUpcoming"
-                  class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/25 text-xs font-bold text-emerald-500"
-                  style="border-radius: 6px"
-                >
-                  <span
-                    class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
-                  ></span>
-                  Live
-                </div>
-                <div
-                  v-else
-                  class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/25 text-xs font-bold text-amber-500"
-                  style="border-radius: 6px"
-                >
-                  <span
-                    class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"
-                  ></span>
-                  Upcoming
-                </div>
-              </div>
-            </template>
-          </div>
-
-          <!-- Right: Terminal card -->
-          <div class="flex-shrink-0 w-full lg:w-[480px]">
-            <div class="terminal-float relative" style="border-radius: 14px">
-              <!-- Glow ring -->
-              <div
-                class="absolute -inset-px pointer-events-none opacity-60"
-                style="
-                  border-radius: 14px;
-                  background: linear-gradient(
-                    135deg,
-                    rgb(var(--color-primary) / 0.4),
-                    rgba(99, 102, 241, 0.2),
-                    transparent
-                  );
-                  filter: blur(2px);
-                "
-                aria-hidden="true"
-              ></div>
-
-              <!-- Terminal window -->
-              <div
-                class="relative overflow-hidden bg-slate-950 border border-slate-700/50 shadow-2xl"
-                style="border-radius: 14px"
+              <button
+                class="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold font-mono flex items-center gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer transition-all active:scale-95"
+                :disabled="isRunningDemo"
+                @click="runDemoCode"
               >
-                <!-- Chrome bar -->
-                <div
-                  class="flex items-center gap-3 px-4 py-3 bg-slate-900/80 border-b border-slate-700/40"
-                >
-                  <div class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-full bg-[#ff5f57]"></span>
-                    <span class="w-3 h-3 rounded-full bg-[#febc2e]"></span>
-                    <span class="w-3 h-3 rounded-full bg-[#28c840]"></span>
-                  </div>
-                  <div
-                    class="flex-1 h-5 bg-slate-800 flex items-center px-2.5"
-                    style="border-radius: 4px"
-                  >
-                    <span class="text-[10px] text-slate-500 font-mono truncate"
-                      >POST /api/auth/register</span
-                    >
-                  </div>
-                </div>
+                <span class="material-symbols-outlined text-[16px]" :class="{ 'animate-spin': isRunningDemo }">
+                  {{ isRunningDemo ? 'refresh' : 'play_arrow' }}
+                </span>
+                <span>{{ isRunningDemo ? 'Executing…' : 'Run Test Cases' }}</span>
+              </button>
+            </div>
 
-                <!-- Code body -->
-                <div
-                  class="p-6 font-mono text-[13px] leading-relaxed select-none"
-                >
-                  <!-- Method badge + path -->
-                  <div class="flex items-center gap-2 mb-4">
-                    <span
-                      class="px-1.5 py-0.5 text-[10px] font-bold bg-primary/20 text-primary"
-                      style="border-radius: 3px"
-                      >POST</span
-                    >
-                    <span class="text-slate-300">/api/auth/register</span>
-                  </div>
+            <!-- Code Body -->
+            <div class="p-5 font-mono text-xs leading-relaxed text-slate-200 bg-[#090d13] overflow-x-auto">
+              <pre><code>{{ codeSnippets[activeLang] }}</code></pre>
+            </div>
 
-                  <!-- Request body -->
-                  <div class="text-slate-500 mb-0.5">{</div>
-                  <div class="pl-5 mb-0.5">
-                    <span class="text-emerald-400">"rollNumber"</span>
-                    <span class="text-slate-500">: </span>
-                    <span class="text-amber-300">"20CS101"</span>
-                    <span class="text-slate-500">,</span>
-                  </div>
-                  <div class="pl-5 mb-0.5">
-                    <span class="text-emerald-400">"password"</span>
-                    <span class="text-slate-500">: </span>
-                    <span class="text-amber-300">"••••••••"</span>
-                    <span class="text-slate-500">,</span>
-                  </div>
-                  <div class="pl-5">
-                    <span class="text-emerald-400">"qaRoleOptIn"</span>
-                    <span class="text-slate-500">: </span>
-                    <span class="text-purple-400">true</span>
-                  </div>
-                  <div class="text-slate-500 mb-5">}</div>
-
-                  <!-- Response -->
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="text-slate-600 text-[11px]">Response</span>
-                    <span
-                      class="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-500/15 text-emerald-400"
-                      style="border-radius: 3px"
-                      >201 Created</span
-                    >
-                  </div>
-                  <div class="text-slate-500 mb-0.5">{</div>
-                  <div class="pl-5 mb-0.5">
-                    <span class="text-emerald-400">"accessToken"</span>
-                    <span class="text-slate-500">: </span>
-                    <span class="text-sky-300">"eyJhbGciOiJIUzI1..."</span>
-                  </div>
-                  <div class="text-slate-500 mb-5">}</div>
-
-                  <!-- Prompt line -->
-                  <div class="flex items-center gap-2">
-                    <span class="text-primary font-bold">▸</span>
-                    <span
-                      class="cursor-blink w-[9px] h-[16px] bg-primary/80 inline-block"
-                    ></span>
-                  </div>
-                </div>
+            <!-- Output Console Bar -->
+            <div class="px-5 py-4 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+              <div class="flex items-center gap-2">
+                <span class="text-slate-500 font-bold">Output:</span>
+                <span v-if="demoOutputReady" class="text-emerald-400 font-semibold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">task_alt</span>
+                  Accepted · Max Subarray Sum = 6 (Execution: 14ms)
+                </span>
+                <span v-else class="text-amber-400 animate-pulse">Running Judge0 batch container…</span>
               </div>
+              <span class="text-slate-500 text-[11px]">Memory: 14.4MB · Exit code: 0</span>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <!-- HOW IT WORKS                                                  -->
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <section
-        id="how-it-works"
-        class="py-20 md:py-24 bg-slate-50/70 dark:bg-accent-navy/20 backdrop-blur-sm"
-      >
-        <div class="max-w-[1200px] mx-auto px-6">
-          <!-- Heading -->
-          <div class="mb-14 text-center">
-            <p
-              class="text-[11px] font-bold uppercase tracking-[0.2em] text-primary mb-3"
-            >
-              Process
-            </p>
-            <h2
-              class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-3"
-            >
-              How It Works
-            </h2>
-            <div
-              class="h-1 w-12 bg-primary mx-auto"
-              style="border-radius: 2px"
-            ></div>
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <!-- HOW IT WORKS CANDIDATE PIPELINE (#how-it-works)                 -->
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <section id="how-it-works" class="py-20 md:py-28 max-w-[1240px] mx-auto px-4 sm:px-6">
+        <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200">
+            <span class="material-symbols-outlined text-[14px]">route</span>
+            Smooth Journey
           </div>
+          <h2 class="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+            How The Assessment Runs
+          </h2>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            A frictionless candidate experience designed for focus, speed, and zero confusion.
+          </p>
+        </div>
 
-          <!-- Steps grid with connecting line -->
-          <div class="relative">
-            <!-- Connecting line - desktop only -->
-            <div
-              class="hidden lg:block absolute top-[28px] left-[10%] right-[10%] h-px"
-              style="
-                background: linear-gradient(
-                  to right,
-                  transparent,
-                  rgba(148, 163, 184, 0.3),
-                  rgba(148, 163, 184, 0.3),
-                  transparent
-                );
-              "
-              aria-hidden="true"
-            ></div>
-
-            <div
-              class="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5"
-            >
-              <div
-                v-for="(step, i) in steps"
-                :key="i"
-                class="group flex flex-col gap-4 bg-white dark:bg-background-dark border border-slate-200 dark:border-slate-800 hover:border-primary/40 dark:hover:border-primary/30 p-6 pt-0 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 dark:-translate-y-0 hover:-translate-y-0.5"
-                style="border-radius: 10px"
-              >
-                <!-- Step number row -->
-                <div
-                  class="flex items-center justify-between -mx-6 px-6 pt-5 pb-4 border-b border-slate-100 dark:border-slate-800/60"
-                >
-                  <span
-                    class="text-5xl font-black leading-none select-none"
-                    style="
-                      background: linear-gradient(
-                        135deg,
-                        rgb(var(--color-primary) / 0.85),
-                        rgb(var(--color-primary) / 0.25)
-                      );
-                      -webkit-background-clip: text;
-                      background-clip: text;
-                      -webkit-text-fill-color: transparent;
-                    "
-                    >{{ String(i + 1).padStart(2, '0') }}</span
-                  >
-                  <div
-                    class="w-10 h-10 flex items-center justify-center bg-primary/8 dark:bg-primary/10 text-primary group-hover:bg-primary/15 transition-colors"
-                    style="border-radius: 8px"
-                  >
-                    <span class="material-symbols-outlined text-[20px]">{{
-                      step.icon
-                    }}</span>
-                  </div>
-                </div>
-                <h3
-                  class="text-[15px] font-bold text-slate-900 dark:text-white"
-                >
-                  {{ step.title }}
-                </h3>
-                <p
-                  class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed"
-                >
-                  {{ step.desc }}
-                </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+          <div
+            v-for="(step, i) in journeySteps"
+            :key="i"
+            class="journey-step-card"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-3xl font-black text-primary/40 dark:text-primary/60 font-mono">{{ step.step }}</span>
+              <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary dark:text-slate-200 border border-primary/20 flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">{{ step.icon }}</span>
               </div>
             </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">
+              {{ step.title }}
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              {{ step.desc }}
+            </p>
           </div>
         </div>
       </section>
 
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <!-- CONTEST DETAILS                                               -->
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <section id="details" class="py-20 md:py-24 max-w-[1200px] mx-auto px-6">
-        <div class="flex flex-col lg:flex-row gap-14 lg:gap-20">
-          <!-- Left: Timeline -->
-          <div class="flex-1">
-            <p
-              class="text-[11px] font-bold uppercase tracking-[0.2em] text-primary mb-3"
-            >
-              Schedule & Format
-            </p>
-            <h2
-              class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-10"
-            >
-              Contest Details
-            </h2>
-
-            <div class="relative pl-8">
-              <!-- Vertical rail -->
-              <div
-                class="timeline-rail absolute left-3 top-2 bottom-4 w-px"
-                aria-hidden="true"
-              ></div>
-
-              <div class="space-y-8">
-                <!-- Dynamic date item -->
-                <div v-if="viewingExam" class="relative">
-                  <div
-                    class="absolute -left-[22px] top-1.5 w-3 h-3 rounded-full bg-primary ring-4 ring-primary/20"
-                  ></div>
-                  <h4
-                    class="text-base font-bold text-slate-900 dark:text-white mb-1"
-                  >
-                    {{ examDate }}
-                  </h4>
-                  <p
-                    class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed"
-                  >
-                    The contest runs for {{ examDuration }}.
-                  </p>
-                </div>
-                <!-- Skeleton for date -->
-                <div v-else-if="loading" class="relative">
-                  <div
-                    class="absolute -left-[22px] top-1.5 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700 animate-pulse"
-                  ></div>
-                  <div
-                    class="h-5 w-3/4 bg-slate-200 dark:bg-slate-800 animate-pulse mb-2"
-                    style="border-radius: 4px"
-                  />
-                  <div
-                    class="h-4 w-1/2 bg-slate-200 dark:bg-slate-800 animate-pulse"
-                    style="border-radius: 4px"
-                  />
-                </div>
-
-                <!-- Static detail items -->
-                <div v-for="(detail, i) in details" :key="i" class="relative">
-                  <div
-                    class="absolute -left-[22px] top-1.5 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700 ring-4 ring-background-light dark:ring-background-dark"
-                  ></div>
-                  <h4
-                    class="text-base font-bold text-slate-900 dark:text-white mb-1"
-                  >
-                    {{ detail.title }}
-                  </h4>
-                  <p
-                    class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed"
-                  >
-                    {{ detail.desc }}
-                  </p>
-                </div>
-              </div>
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <!-- OFFICIAL RULES (#rules)                                         -->
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <section id="rules" class="py-20 bg-slate-100/70 dark:bg-[#0d1117]/80 border-t border-slate-200 dark:border-white/[0.06]">
+        <div class="max-w-[1240px] mx-auto px-4 sm:px-6">
+          <div class="text-center max-w-2xl mx-auto mb-14 space-y-3">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs font-bold uppercase tracking-widest text-primary dark:text-slate-200">
+              <span class="material-symbols-outlined text-[14px]">gavel</span>
+              Integrity Standards
             </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <!-- RULES                                                         -->
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <section
-        id="rules"
-        class="py-20 md:py-24 bg-slate-50/70 dark:bg-accent-navy/15 backdrop-blur-sm"
-      >
-        <div class="max-w-[1200px] mx-auto px-6">
-          <!-- Heading -->
-          <div class="text-center mb-14">
-            <p
-              class="text-[11px] font-bold uppercase tracking-[0.2em] text-primary mb-3"
-            >
-              Guidelines
-            </p>
-            <h2
-              class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-3"
-            >
-              Official Rules
+            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+              Assessment Code of Conduct
             </h2>
-            <div
-              class="h-1 w-12 bg-primary mx-auto mb-4"
-              style="border-radius: 2px"
-            ></div>
-            <p
-              class="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto"
-            >
-              Please adhere to the following guidelines to ensure a fair
-              competition for everyone.
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              Please review our strict assessment parameters to ensure fair and accredited evaluation.
             </p>
           </div>
 
-          <!-- Rules grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
             <div
-              v-for="(rule, i) in rules"
+              v-for="(rule, i) in platformRules"
               :key="i"
-              class="group relative flex gap-5 items-start bg-white dark:bg-background-dark border border-slate-200 dark:border-slate-800 hover:border-primary/30 dark:hover:border-primary/20 p-6 transition-all duration-200 hover:shadow-md hover:shadow-primary/5 overflow-hidden"
-              style="border-radius: 10px"
+              class="rule-card"
             >
-              <!-- Hover top-edge line -->
-              <div
-                class="absolute top-0 left-0 h-[2px] w-0 group-hover:w-full bg-gradient-to-r from-primary to-transparent transition-all duration-300 pointer-events-none"
-                aria-hidden="true"
-              ></div>
-
-              <!-- Number badge -->
-              <div
-                class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-primary text-white text-sm font-black shadow-lg shadow-primary/25 group-hover:shadow-primary/45 transition-shadow"
-                style="border-radius: 8px"
-              >
+              <div class="w-8 h-8 rounded-lg bg-primary text-white font-mono font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-md shadow-primary/20">
                 {{ rule.num }}
               </div>
-
               <div>
-                <h4 class="font-bold text-slate-900 dark:text-white mb-1.5">
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">
                   {{ rule.title }}
                 </h4>
-                <p
-                  class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed"
-                >
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   {{ rule.desc }}
                 </p>
               </div>
@@ -911,199 +852,179 @@ const rules = [
           </div>
         </div>
       </section>
+
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <!-- BOTTOM CALL TO ACTION                                            -->
+      <!-- ════════════════════════════════════════════════════════════════ -->
+      <section class="py-20 md:py-24 max-w-[1240px] mx-auto px-4 sm:px-6">
+        <div class="cta-banner">
+          <div class="relative z-10 max-w-2xl mx-auto text-center space-y-5">
+            <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
+              Ready for Your Next Coding Milestone?
+            </h2>
+            <p class="text-sm sm:text-base text-slate-300">
+              Jump into active challenges, track your ranking live on the ICPC scoreboard, and prove your engineering mastery.
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                class="px-6 py-3 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-sm shadow-xl transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                @click="scrollTo('contests')"
+              >
+                <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+                <span>Enter Contests</span>
+              </button>
+              <router-link
+                to="/login"
+                class="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm transition-all"
+              >
+                Sign In to Account
+              </router-link>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <!-- ── Footer ─────────────────────────────────────────────────────── -->
-    <footer
-      class="relative z-10 border-t border-slate-200 dark:border-slate-800 py-6 px-6 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm"
-    >
-      <div
-        class="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2"
-      >
-        <span class="text-xs text-slate-400 dark:text-slate-600">
-          &copy; {{ new Date().getFullYear()
-          }}{{ brand.copyrightHolder ? ` ${brand.copyrightHolder}` : '' }}
-        </span>
+    <!-- ── SaaS Footer ─────────────────────────────────────────────────── -->
+    <footer class="relative z-10 border-t border-slate-200 dark:border-white/[0.06] py-8 px-4 sm:px-6 bg-white/80 dark:bg-[#07090d]/80 backdrop-blur-md">
+      <div class="max-w-[1240px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+        <div class="flex items-center gap-3">
+          <img
+            :src="brand.logoPath"
+            :alt="brand.appName"
+            class="h-6 object-contain"
+            style="filter: drop-shadow(0 0 6px rgb(var(--color-primary)))"
+          />
+          <span class="font-bold text-slate-800 dark:text-slate-200">{{ brand.appName }}</span>
+          <span>·</span>
+          <span>© {{ new Date().getFullYear() }} All Rights Reserved.</span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1.5 text-emerald-500 font-bold text-[11px]">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            All Systems Operational
+          </div>
+          <span>·</span>
+          <router-link to="/admin/login" class="hover:text-primary dark:hover:text-white transition-colors">
+            Admin Portal
+          </router-link>
+        </div>
       </div>
     </footer>
   </div>
 </template>
 
 <style scoped>
-/* ── Mobile menu slide ── */
-.slide-enter-active,
-.slide-leave-active {
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
-}
-.slide-enter-from,
-.slide-leave-to {
-  transform: translateY(-10px);
-  opacity: 0;
-}
-
-/* ── Ambient dot-grid texture ── */
-.dot-grid {
-  background-image: radial-gradient(
-    circle,
-    currentColor 1.5px,
-    transparent 1.5px
-  );
-  background-size: 22px 22px;
-}
-
-/* ── Ambient blobs ── */
-.blob {
+/* ── Ambient Glows ── */
+.ambient-glow {
   position: absolute;
   border-radius: 50%;
-  filter: blur(88px);
-  will-change: transform;
+  filter: blur(100px);
+  pointer-events: none;
 }
-
-html:not(.dark) .blob {
-  opacity: 0.3;
+.glow-1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgb(var(--color-primary) / 0.25) 0%, transparent 70%);
+  top: -200px;
+  left: -150px;
 }
-
-.blob-1 {
-  width: 540px;
-  height: 540px;
-  background: radial-gradient(
-    circle,
-    rgb(var(--color-primary) / 0.32) 0%,
-    transparent 70%
-  );
-  top: -180px;
-  left: -140px;
-  animation: drift1 15s ease-in-out infinite;
-}
-
-.blob-2 {
-  width: 640px;
-  height: 640px;
-  background: radial-gradient(
-    circle,
-    rgba(99, 102, 241, 0.22) 0%,
-    transparent 70%
-  );
-  bottom: -220px;
+.glow-2 {
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 70%);
+  bottom: 10%;
   right: -200px;
-  animation: drift2 19s ease-in-out infinite;
 }
-
-.blob-3 {
+.glow-3 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(
-    circle,
-    rgba(245, 158, 11, 0.14) 0%,
-    transparent 70%
-  );
-  top: 38%;
-  right: 8%;
-  animation: drift3 12s ease-in-out infinite;
+  background: radial-gradient(circle, rgb(var(--color-primary) / 0.15) 0%, transparent 70%);
+  top: 40%;
+  left: 20%;
 }
 
-@keyframes drift1 {
-  0%,
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(45px, 65px) scale(1.08);
-  }
-  66% {
-    transform: translate(-30px, 28px) scale(0.95);
-  }
+.dot-grid {
+  background-image: radial-gradient(circle, currentColor 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
 }
 
-@keyframes drift2 {
-  0%,
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  40% {
-    transform: translate(-65px, -45px) scale(1.1);
-  }
-  70% {
-    transform: translate(32px, -18px) scale(0.92);
-  }
-}
-
-@keyframes drift3 {
-  0%,
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  50% {
-    transform: translate(-55px, 42px) scale(1.12);
-  }
-}
-
-/* ── Terminal card float ── */
-.terminal-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
-}
-
-/* ── Blinking cursor ── */
-.cursor-blink {
-  animation: blink 1.1s step-end infinite;
-}
-
-@keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-}
-
-/* ── Hero countdown ── */
-.hero-countdown {
-  font-size: clamp(2.8rem, 7vw, 5rem);
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.03em;
-  line-height: 1;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--color-primary)) 0%,
-    rgb(var(--color-primary) / 0.6) 100%
-  );
+/* ── Typography & Gradients ── */
+.hero-gradient-text {
+  background: linear-gradient(135deg, rgb(var(--color-primary)) 0%, #8b5cf6 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* ── Timeline rail pulse ── */
-.timeline-rail {
-  background: linear-gradient(
-    to bottom,
-    rgb(var(--color-primary) / 0.7),
-    rgb(var(--color-primary) / 0.15),
-    transparent
-  );
-  animation: rail-pulse 3s ease-in-out infinite alternate;
+/* ── Buttons ── */
+.btn-hero-primary {
+  @apply inline-flex items-center gap-2.5 h-12 px-6 rounded-xl bg-primary hover:bg-primary/90
+         text-white font-bold text-sm shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35
+         transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
-@keyframes rail-pulse {
-  from {
-    opacity: 0.6;
-  }
-  to {
-    opacity: 1;
-  }
+.btn-hero-secondary {
+  @apply inline-flex items-center gap-2 h-12 px-5 rounded-xl bg-white dark:bg-white/[0.04]
+         border border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/[0.08]
+         text-slate-800 dark:text-slate-200 font-bold text-sm transition-all active:scale-95 no-underline cursor-pointer;
+}
+
+/* ── Cards & Bento ── */
+.metric-card {
+  @apply p-4 rounded-2xl bg-white/70 dark:bg-[#161b22]/70 border border-slate-200 dark:border-slate-800/80
+         backdrop-blur-md flex flex-col items-center justify-center text-center gap-1 shadow-sm;
+}
+
+.hero-glow-box {
+  @apply absolute -inset-1 rounded-3xl opacity-50 blur-xl pointer-events-none;
+  background: linear-gradient(135deg, rgb(var(--color-primary) / 0.4), rgba(99, 102, 241, 0.2), transparent);
+}
+
+.exam-hub-card {
+  @apply flex flex-col p-6 rounded-2xl bg-white dark:bg-[#161b22]/90 border border-slate-200 dark:border-slate-800
+         hover:border-primary/40 dark:hover:border-primary/40 transition-all duration-200 shadow-sm hover:shadow-xl hover:shadow-primary/5;
+}
+
+.status-pill {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider;
+}
+.status-pill--live {
+  @apply bg-emerald-500/15 border border-emerald-500/30 text-emerald-500;
+}
+.status-pill--upcoming {
+  @apply bg-amber-500/15 border border-amber-500/30 text-amber-500;
+}
+
+.bento-card {
+  @apply flex flex-col p-6 rounded-2xl bg-white dark:bg-[#161b22]/70 border border-slate-200 dark:border-slate-800/80
+         hover:border-primary/40 dark:hover:border-primary/40 transition-all duration-200 shadow-sm hover:shadow-lg backdrop-blur-md;
+}
+
+.journey-step-card {
+  @apply p-6 rounded-2xl bg-white dark:bg-[#161b22]/70 border border-slate-200 dark:border-slate-800/80
+         flex flex-col shadow-sm;
+}
+
+.rule-card {
+  @apply flex items-start gap-4 p-5 rounded-2xl bg-white dark:bg-[#161b22]/70 border border-slate-200 dark:border-slate-800/80
+         shadow-sm;
+}
+
+.cta-banner {
+  @apply relative p-10 md:p-14 rounded-3xl overflow-hidden shadow-2xl;
+  background: linear-gradient(135deg, rgb(var(--color-primary)) 0%, #4c1d95 60%, #1e1b4b 100%);
+}
+
+/* ── Mobile menu transition ── */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateY(-8px);
+  opacity: 0;
 }
 </style>
