@@ -78,6 +78,7 @@ services:
       POSTGRES_PASSWORD: judge0
     volumes:
       - judge0-db-data:/var/lib/postgresql/data
+      - ./judge0/init-jvm-flags.sql:/docker-entrypoint-initdb.d/init-jvm-flags.sql:ro
     networks:
       - judge0-network
     restart: unless-stopped

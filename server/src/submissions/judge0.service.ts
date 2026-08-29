@@ -88,17 +88,6 @@ export class Judge0Service {
     return VALID_LANGUAGE_IDS.has(languageId);
   }
 
-  // Language IDs that run on the JVM (Java, Kotlin).
-  // The JVM reserves ~1 GB of virtual address space for metaspace on startup,
-  // so the per-process memory limit must be high enough to accommodate it.
-  private static readonly JVM_LANGUAGE_IDS = new Set([
-    62, 91,  // Java (OpenJDK 13, Java 17)
-    78,      // Kotlin
-  ]);
-
-  // 1.5 GB in KB — covers the JVM's 1 GB metaspace reservation + heap + stack
-  private static readonly JVM_MIN_MEMORY_KB = 1572864;
-
   async runBatch(
     code: string,
     languageId: number,
@@ -106,14 +95,6 @@ export class Judge0Service {
     timeLimitSec = 2,
     memoryLimitKb = 262144,
   ): Promise<JudgeResult[]> {
-    const isJvm = Judge0Service.JVM_LANGUAGE_IDS.has(languageId);
-
-    // JVM languages need a much higher memory ceiling because the JVM
-    // reserves ~1 GB of virtual address space for metaspace on startup.
-    const effectiveMemoryKb = isJvm
-      ? Math.max(memoryLimitKb, Judge0Service.JVM_MIN_MEMORY_KB)
-      : memoryLimitKb;
-
     const submissions = testCases.map((tc) => ({
       source_code: this.toBase64(code),
       language_id: languageId,
@@ -122,7 +103,7 @@ export class Judge0Service {
         ? { expected_output: this.toBase64(tc.expectedOutput) }
         : {}),
       cpu_time_limit: timeLimitSec,
-      memory_limit: effectiveMemoryKb,
+      memory_limit: memoryLimitKb,
       enable_per_process_and_thread_time_limit: true,
       enable_per_process_and_thread_memory_limit: true,
     }));
