@@ -11,7 +11,7 @@ export default {
     extend: {
       colors: {
         primary: 'rgb(var(--color-primary) / <alpha-value>)',
-        'background-light': '#f8f6f6',
+        'background-light': '#f4f4f7',
         'background-dark': '#0a0c10',
         'surface-dark': 'rgb(var(--color-surface-dark) / <alpha-value>)',
         'border-dark': 'rgb(var(--color-border-dark) / <alpha-value>)',

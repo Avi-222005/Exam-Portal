@@ -254,7 +254,7 @@ const rules = [
 
 <template>
   <div
-    class="relative flex w-full flex-col overflow-y-auto overflow-x-hidden bg-white dark:bg-[#09090b] font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen"
+    class="relative flex w-full flex-col overflow-y-auto overflow-x-hidden bg-[#f8f8fa] dark:bg-[#09090b] font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen"
   >
     <!-- ── Subtle Background Gradient ────────────────────────────────── -->
     <div class="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">

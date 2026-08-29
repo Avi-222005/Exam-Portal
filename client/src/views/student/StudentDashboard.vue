@@ -652,11 +652,11 @@ async function runDiagnostics() {
 
 <template>
   <div
-    class="flex flex-col h-screen overflow-hidden bg-white dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display"
+    class="flex flex-col h-screen overflow-hidden bg-[#f4f4f7] dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display"
   >
     <!-- ── Top Header Bar (Admin style) ──────────────────────────────── -->
     <header
-      class="flex items-center justify-between h-12 px-5 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-white/[0.06] flex-shrink-0 gap-4 select-none"
+      class="flex items-center justify-between h-12 px-5 bg-[#fafafc] dark:bg-background-dark border-b border-slate-200/90 dark:border-white/[0.06] flex-shrink-0 gap-4 select-none"
     >
       <!-- Left: Mobile toggle + Logo + Student Badge -->
       <div class="flex items-center gap-3 min-w-[180px]">
@@ -734,7 +734,7 @@ async function runDiagnostics() {
 
     <!-- ── Mobile Drawer Sidebar ─────────────────────────────────────── -->
     <nav
-      class="sm:hidden fixed inset-y-0 left-0 z-50 w-[240px] flex flex-col bg-white dark:bg-background-dark border-r border-slate-200 dark:border-white/[0.06] py-3 transition-transform duration-200"
+      class="sm:hidden fixed inset-y-0 left-0 z-50 w-[240px] flex flex-col bg-[#ececf1] dark:bg-background-dark border-r border-slate-200/90 dark:border-white/[0.06] py-3 transition-transform duration-200"
       :class="mobileNavOpen ? 'translate-x-0' : '-translate-x-full'"
     >
       <div class="flex-1 flex flex-col gap-1 px-2 overflow-y-auto">
@@ -746,7 +746,7 @@ async function runDiagnostics() {
           :class="
             activeTab === tab.id
               ? 'bg-primary/10 text-primary font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.04]'
           "
           @click="selectTab(tab.id)"
         >
@@ -772,7 +772,7 @@ async function runDiagnostics() {
 
         <router-link
           to="/"
-          class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] no-underline"
+          class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.04] no-underline"
           @click="mobileNavOpen = false"
         >
           <span class="material-symbols-outlined text-[18px]">home</span>
@@ -788,7 +788,7 @@ async function runDiagnostics() {
     <div class="flex flex-1 overflow-hidden">
       <!-- ── Desktop Sidebar ─────────────────────────────────────────── -->
       <nav
-        class="hidden sm:flex w-[230px] flex-shrink-0 bg-slate-50/80 dark:bg-background-dark border-r border-slate-200 dark:border-white/[0.06] flex-col py-3 select-none"
+        class="hidden sm:flex w-[230px] flex-shrink-0 bg-[#ececf1] dark:bg-background-dark border-r border-slate-200/90 dark:border-white/[0.06] flex-col py-3 select-none"
       >
         <div class="flex-1 flex flex-col gap-1 px-2.5">
           <button
@@ -799,7 +799,7 @@ async function runDiagnostics() {
             :class="
               activeTab === tab.id
                 ? 'bg-primary/10 text-primary font-bold shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200'
             "
             @click="selectTab(tab.id)"
           >
@@ -825,7 +825,7 @@ async function runDiagnostics() {
 
           <router-link
             to="/"
-            class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-primary no-underline transition-colors"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.04] hover:text-primary no-underline transition-colors"
           >
             <span class="material-symbols-outlined text-[18px]">home</span>
             <span>Go to Home</span>
@@ -838,7 +838,7 @@ async function runDiagnostics() {
       </nav>
 
       <!-- ── Main Content Area ───────────────────────────────────────── -->
-      <main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 custom-scrollbar space-y-6 bg-slate-50/50 dark:bg-[#0d1117] min-w-0">
+      <main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 custom-scrollbar space-y-6 bg-[#f4f4f7] dark:bg-[#0d1117] min-w-0">
         <!-- ── Top Welcome & Profile Banner ──────────────────────────── -->
         <section class="welcome-card">
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">

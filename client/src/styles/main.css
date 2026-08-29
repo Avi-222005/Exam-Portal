@@ -8,14 +8,14 @@
   --font-heading: 'Figtree', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 
-  /* Light mode */
-  --bg-primary:   #f8f6f6;
-  --bg-secondary: #f1eeee;
+  /* Light mode (Pleasing, eye-friendly modern off-white palette) */
+  --bg-primary:   #f4f4f7;
+  --bg-secondary: #ececf1;
   --bg-elevated:  #ffffff;
   --border:       rgba(0, 0, 0, 0.08);
-  --text-primary:   #0f172a;
-  --text-secondary: #374151;
-  --text-muted:     #6b7280;
+  --text-primary:   #18181b;
+  --text-secondary: #3f3f46;
+  --text-muted:     #71717a;
   --brand-teal:     rgb(var(--color-accent));
   --status-success: rgb(var(--color-accent));
   --status-error:   rgb(var(--color-primary));
@@ -96,6 +96,8 @@ html,
 body {
   height: 100%;
   font-family: 'Figtree', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 #app {

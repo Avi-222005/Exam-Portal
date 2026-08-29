@@ -119,11 +119,11 @@ function logout() {
 
 <template>
   <div
-    class="flex flex-col h-full overflow-hidden bg-white dark:bg-background-dark text-slate-900 dark:text-slate-100"
+    class="flex flex-col h-full overflow-hidden bg-[#f4f4f7] dark:bg-background-dark text-slate-900 dark:text-slate-100"
   >
     <!-- Top Bar -->
     <header
-      class="flex items-center justify-between h-12 px-5 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-white/[0.06] flex-shrink-0 gap-4"
+      class="flex items-center justify-between h-12 px-5 bg-[#fafafc] dark:bg-background-dark border-b border-slate-200/90 dark:border-white/[0.06] flex-shrink-0 gap-4"
     >
       <!-- Left: Logo + Admin badge -->
       <div class="flex items-center gap-3 min-w-[160px]">
@@ -198,7 +198,7 @@ function logout() {
     />
     <!-- Mobile drawer sidebar -->
     <nav
-      class="sm:hidden fixed inset-y-0 left-0 z-50 w-[240px] flex flex-col bg-white dark:bg-background-dark border-r border-slate-200 dark:border-white/[0.06] py-3 transition-transform duration-200"
+      class="sm:hidden fixed inset-y-0 left-0 z-50 w-[240px] flex flex-col bg-[#ececf1] dark:bg-background-dark border-r border-slate-200/90 dark:border-white/[0.06] py-3 transition-transform duration-200"
       :class="mobileNavOpen ? 'translate-x-0' : '-translate-x-full'"
     >
       <div class="flex-1 flex flex-col gap-0.5 px-2 overflow-y-auto">
@@ -210,7 +210,7 @@ function logout() {
           :class="
             isActive(link.name)
               ? 'bg-primary/10 text-primary'
-              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200'
           "
           @click="mobileNavOpen = false"
         >
@@ -224,7 +224,7 @@ function logout() {
 
         <RouterLink
           to="/"
-          class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium no-underline transition-all duration-150 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-blue-600 dark:hover:text-blue-400"
+          class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium no-underline transition-all duration-150 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-white/[0.04] hover:text-blue-600 dark:hover:text-blue-400"
           @click="mobileNavOpen = false"
         >
           <span class="material-symbols-outlined text-[18px]">home</span>
@@ -239,7 +239,7 @@ function logout() {
     <div class="flex flex-1 overflow-hidden">
       <!-- Sidebar -->
       <nav
-        class="hidden sm:flex w-[200px] flex-shrink-0 bg-slate-50 dark:bg-background-dark border-r border-slate-200 dark:border-white/[0.06] flex-col py-3"
+        class="hidden sm:flex w-[200px] flex-shrink-0 bg-[#ececf1] dark:bg-background-dark border-r border-slate-200/90 dark:border-white/[0.06] flex-col py-3"
       >
         <div class="flex-1 flex flex-col gap-0.5 px-2">
           <RouterLink
@@ -250,7 +250,7 @@ function logout() {
             :class="
               isActive(link.name)
                 ? 'bg-primary/10 text-primary'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-slate-200'
             "
           >
             <span class="material-symbols-outlined text-[18px]">{{
@@ -263,7 +263,7 @@ function logout() {
 
           <RouterLink
             to="/"
-            class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium no-underline transition-all duration-150 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-blue-600 dark:hover:text-blue-400"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium no-underline transition-all duration-150 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-white/[0.04] hover:text-blue-600 dark:hover:text-blue-400"
           >
             <span class="material-symbols-outlined text-[18px]">home</span>
             <span>Go to Home</span>
@@ -276,12 +276,12 @@ function logout() {
 
       <!-- Content -->
       <main
-        class="flex-1 overflow-y-auto p-4 sm:p-7 bg-white dark:bg-background-dark"
+        class="flex-1 overflow-y-auto p-4 sm:p-7 bg-[#f4f4f7] dark:bg-background-dark"
       >
         <!-- Active exams info -->
         <div
           v-if="activeExams.length > 0"
-          class="mb-5 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/40 flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-400"
+          class="mb-5 px-4 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700/60 bg-white/90 dark:bg-slate-800/40 shadow-2xs flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-400"
         >
           <span class="material-symbols-outlined text-[16px] text-primary"
             >quiz</span
