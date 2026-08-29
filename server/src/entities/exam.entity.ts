@@ -27,4 +27,7 @@ export class Exam extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   passcode?: string | null;
+
+  @Column({ type: 'int', default: 5 })
+  maxViolations: number;
 }

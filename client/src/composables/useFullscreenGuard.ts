@@ -8,10 +8,11 @@ export type ViolationType =
   | 'side_panel_detected'
   | 'tab_switched';
 
-export const MAX_ALLOWED_VIOLATIONS = 5;
+export const DEFAULT_MAX_VIOLATIONS = 5;
 
 export function useFullscreenGuard(
   examIdSource?: Ref<number | string | undefined> | (() => number | string | undefined),
+  maxViolationsSource?: Ref<number | undefined> | (() => number | undefined) | number,
 ) {
   const authStore = useAuthStore();
 
@@ -22,6 +23,15 @@ export function useFullscreenGuard(
     if (typeof examIdSource === 'function') return examIdSource() ?? 'current';
     return examIdSource.value ?? 'current';
   };
+
+  const getMaxViolations = () => {
+    if (typeof maxViolationsSource === 'number') return maxViolationsSource;
+    if (typeof maxViolationsSource === 'function') return maxViolationsSource() ?? DEFAULT_MAX_VIOLATIONS;
+    if (maxViolationsSource && 'value' in maxViolationsSource) return maxViolationsSource.value ?? DEFAULT_MAX_VIOLATIONS;
+    return DEFAULT_MAX_VIOLATIONS;
+  };
+
+  const maxViolations = computed(getMaxViolations);
 
   const getViolationsKey = () => `cv_u_${getUserId()}_exam_${getExamId()}_fs_violations`;
 
@@ -38,7 +48,7 @@ export function useFullscreenGuard(
 
   let pollInterval: number | null = null;
 
-  const isLockedOut = computed(() => violationCount.value >= MAX_ALLOWED_VIOLATIONS);
+  const isLockedOut = computed(() => violationCount.value >= maxViolations.value);
 
   // Shield flag: whenever modal is visible, focus is lost, or not in fullscreen,
   // question and code editor content must be completely unmounted from the DOM!
@@ -384,7 +394,7 @@ export function useFullscreenGuard(
     currentViolationReason,
     isSidePanelOpen,
     isLockedOut,
-    maxViolations: MAX_ALLOWED_VIOLATIONS,
+    maxViolations,
     isQuestionContentHidden,
     isStarted,
     enterFullscreen,

@@ -44,4 +44,9 @@ export class UpdateExamDto {
   @IsString()
   @IsOptional()
   passcode?: string | null;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  maxViolations?: number;
 }

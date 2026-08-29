@@ -18,6 +18,7 @@ export interface Exam {
   isActive?: boolean;
   accessType?: 'open' | 'passcode' | 'whitelist';
   isPasscodeProtected?: boolean;
+  maxViolations?: number;
 }
 
 export interface ExamEnrollment {

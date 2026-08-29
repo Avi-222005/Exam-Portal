@@ -41,6 +41,7 @@ const durationMinutes = ref(120);
 const isActive = ref(false);
 const accessType = ref<'open' | 'passcode' | 'whitelist'>('open');
 const passcode = ref('');
+const maxViolations = ref(5);
 const showCandidateModal = ref(false);
 const selectedLanguages = ref<number[]>([71, 62, 63, 54, 50]); // Python, Java, NodeJS, C++, C default
 
@@ -217,6 +218,7 @@ async function loadExamData() {
     isActive.value = exam.isActive;
     accessType.value = (exam.accessType as 'open' | 'passcode' | 'whitelist') || 'open';
     passcode.value = exam.passcode || '';
+    maxViolations.value = exam.maxViolations ?? 5;
     selectedLanguages.value = [...(exam.allowedLanguages || [])];
 
     // Populate from getExam if available
@@ -484,6 +486,7 @@ async function save() {
       isActive: isActive.value,
       accessType: accessType.value,
       passcode: accessType.value === 'passcode' ? passcode.value.trim() : null,
+      maxViolations: maxViolations.value || 5,
       allowedLanguages: selectedLanguages.value,
     };
 
@@ -908,6 +911,69 @@ async function onDelete() {
             >
               Manage Candidates →
             </button>
+          </div>
+        </div>
+
+        <!-- Proctoring & Anti-Cheating Policy Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col gap-5">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[20px] text-rose-600">gpp_maybe</span>
+              <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                Anti-Cheating & Proctoring Policy
+              </h3>
+            </div>
+            <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold border border-rose-200 dark:border-rose-800/80">
+              Lockout Limit
+            </span>
+          </div>
+
+          <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Maximum Allowed Violations / Focus Losses
+                </label>
+                <div class="flex items-center gap-1.5 text-[11px]">
+                  <span class="text-slate-400">Presets:</span>
+                  <button
+                    type="button"
+                    class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 cursor-pointer font-medium"
+                    @click="maxViolations = 3"
+                  >Strict (3)</button>
+                  <button
+                    type="button"
+                    class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 cursor-pointer font-medium"
+                    @click="maxViolations = 5"
+                  >Standard (5)</button>
+                  <button
+                    type="button"
+                    class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 cursor-pointer font-medium"
+                    @click="maxViolations = 10"
+                  >Lenient (10)</button>
+                  <button
+                    type="button"
+                    class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 cursor-pointer font-medium"
+                    @click="maxViolations = 999"
+                  >No Limit</button>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <input
+                  v-model.number="maxViolations"
+                  type="number"
+                  min="1"
+                  max="999"
+                  class="w-32 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white font-bold focus:border-rose-500 outline-hidden"
+                />
+                <span class="text-xs text-slate-500 dark:text-slate-400">
+                  {{ maxViolations >= 999 ? 'Unlimited violations allowed (no auto-lockout)' : `violations allowed before the exam is automatically locked & submitted` }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">
+                Monitors tab switching, window blurring, browser side panels (Gemini / Copilot), and full-screen exits.
+              </p>
+            </div>
           </div>
         </div>
 

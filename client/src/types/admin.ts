@@ -17,6 +17,7 @@ export interface ExamWithProblems {
   isActive: boolean;
   accessType?: 'open' | 'passcode' | 'whitelist';
   passcode?: string | null;
+  maxViolations?: number;
   createdAt: string;
   problems: ProblemWithTestCases[];
 }

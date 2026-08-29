@@ -44,7 +44,10 @@ const {
   enterFullscreen,
   exitFullscreen,
   clearSession,
-} = useFullscreenGuard(computed(() => examStore.activeExam?.id));
+} = useFullscreenGuard(
+  computed(() => examStore.activeExam?.id),
+  computed(() => examStore.activeExam?.maxViolations),
+);
 
 // Auto-submit when maximum violations are reached
 watch(isLockedOut, (locked) => {

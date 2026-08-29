@@ -45,4 +45,9 @@ export class CreateExamDto {
   @IsString()
   @IsOptional()
   passcode?: string;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  maxViolations?: number;
 }
