@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, ParseIntPipe, Body } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -215,5 +215,17 @@ export class ExamsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.examsService.finishExam(user.id, id);
+  }
+
+  @Post(':id/proctor-event')
+  @Auth()
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Log a proctoring security event or focus violation' })
+  async logProctorEvent(
+    @GetUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { eventType: string; violationCount: number; timestamp?: string },
+  ) {
+    return this.examsService.logProctorEvent(user.id, id, body);
   }
 }

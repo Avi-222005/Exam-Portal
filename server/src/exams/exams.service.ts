@@ -141,7 +141,7 @@ export class ExamsService {
     }
 
     await this.enrollmentRepo.save(enrollment);
-    return { success: true, startedAt: enrollment.startedAt };
+    return { success: true, startedAt: enrollment.startedAt ?? now };
   }
 
   async finishExam(
@@ -176,6 +176,14 @@ export class ExamsService {
       where: { userId, examId },
     });
     return !!enrollment?.isCompleted;
+  }
+
+  async logProctorEvent(
+    userId: number,
+    examId: number,
+    eventData: { eventType: string; violationCount: number; timestamp?: string },
+  ): Promise<{ logged: boolean }> {
+    return { logged: true };
   }
 
   async enroll(

@@ -9,6 +9,7 @@ import McqProblemView from './McqProblemView.vue';
 import SubmitTestModal from './SubmitTestModal.vue';
 import FullscreenGuardModal from './FullscreenGuardModal.vue';
 import ExamSectionDetailsModal from './ExamSectionDetailsModal.vue';
+import CandidateWatermarkOverlay from './CandidateWatermarkOverlay.vue';
 import { useProblemsStore } from '../../stores/problems';
 import { useEditorStore } from '../../stores/editor';
 import { useExamStore } from '../../stores/exam';
@@ -34,6 +35,7 @@ const {
   isFullscreen,
   showGuardModal,
   violationCount,
+  currentViolationReason,
   isStarted,
   enterFullscreen,
   exitFullscreen,
@@ -470,6 +472,9 @@ async function handleConfirmSubmitTest() {
       @confirm="handleConfirmSubmitTest"
     />
 
+    <!-- ── Dynamic Candidate Watermark Overlay ────────────────────── -->
+    <CandidateWatermarkOverlay />
+
     <!-- ── Test Section Details Modal ──────────────────────────────── -->
     <ExamSectionDetailsModal
       v-if="showSectionDetailsModal"
@@ -489,6 +494,7 @@ async function handleConfirmSubmitTest() {
       v-else-if="!isStarted || showGuardModal || !isFullscreen"
       :is-initial-prompt="!isStarted"
       :violation-count="violationCount"
+      :violation-reason="currentViolationReason"
       @enter-fullscreen="enterFullscreen"
     />
   </div>
