@@ -124,7 +124,7 @@ function fullDate(iso: string) {
         >
       </div>
       <div class="flex flex-wrap items-center gap-2.5">
-        <div class="sm:w-48 w-full">
+        <div class="sm:w-64 w-full">
           <RegalSelect
             v-model="examFilter"
             :options="examOptions"
@@ -134,56 +134,56 @@ function fullDate(iso: string) {
         </div>
         <input
           v-model="search"
-          class="w-full sm:w-44 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-colors"
-          placeholder="Search…"
+          class="w-full sm:w-60 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-white/[0.08] rounded-lg px-3.5 py-1.5 text-[13px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all"
+          placeholder="Search autosaves…"
         />
       </div>
     </div>
 
-    <div v-if="loading" class="text-sm text-slate-400">Loading…</div>
-    <div v-else-if="error" class="text-sm text-red-400">{{ error }}</div>
+    <div v-if="loading" class="text-sm text-slate-400 py-8 text-center">Loading…</div>
+    <div v-else-if="error" class="text-sm text-red-400 py-4">{{ error }}</div>
 
     <template v-else>
-      <div v-if="filtered.length === 0" class="text-sm text-slate-400">
+      <div v-if="filtered.length === 0" class="text-sm text-slate-400 py-8 text-center border border-dashed border-slate-200 dark:border-white/[0.06] rounded-xl">
         No autosave records found.
       </div>
 
       <template v-else>
         <!-- Desktop table (hidden on mobile) -->
         <div
-          class="hidden sm:block overflow-x-auto border border-slate-200 dark:border-white/[0.06] rounded-xl"
+          class="hidden sm:block overflow-x-auto border border-slate-200 dark:border-white/[0.06] rounded-xl bg-white dark:bg-surface-dark/40 shadow-sm"
         >
-          <table class="w-full text-[13px]">
+          <table class="w-full text-[13px] border-collapse">
             <thead>
               <tr>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Student
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Exam
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Problems Saved
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Last Updated
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-100 dark:divide-white/[0.04]">
               <tr
                 v-for="r in filtered"
                 :key="r.id"
@@ -196,32 +196,32 @@ function fullDate(iso: string) {
                 "
               >
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 align-middle font-medium"
+                  class="px-4 py-3.5 text-slate-900 dark:text-white align-middle font-medium"
                 >
                   {{ r.user?.rollNumber }} - {{ r.user?.firstName }}
                   {{ r.user?.lastName }}
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 align-middle"
+                  class="px-4 py-3.5 text-slate-600 dark:text-slate-400 align-middle"
                 >
                   {{ r.exam?.title ?? '-' }}
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 align-middle"
+                  class="px-4 py-3.5 text-slate-900 dark:text-slate-200 align-middle font-mono text-xs"
                 >
                   {{ problemCount(r.codeState) }}
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] align-middle font-mono text-xs text-slate-500"
+                  class="px-4 py-3.5 align-middle font-mono text-xs text-slate-500 dark:text-slate-400"
                   :title="fullDate(r.updatedAt)"
                 >
                   {{ timeAgo(r.updatedAt) }}
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] align-middle"
+                  class="px-4 py-3.5 align-middle text-right"
                   @click.stop
                 >
-                  <div class="flex gap-1.5 items-center">
+                  <div class="flex gap-1.5 items-center justify-end">
                     <RegalButton
                       @click="
                         router.push({

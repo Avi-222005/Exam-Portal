@@ -88,7 +88,7 @@ function fmtTime(iso: string) {
         <span class="count-badge">{{ filtered.length }}</span>
       </div>
       <div class="header-right">
-        <div style="width: 200px">
+        <div style="width: 260px">
           <RegalSelect
             v-model="examFilter"
             :options="examOptions"
@@ -126,7 +126,7 @@ function fmtTime(iso: string) {
                 <th>Language</th>
                 <th>Input Type</th>
                 <th>Result</th>
-                <th>Code</th>
+                <th style="text-align: right">Code</th>
               </tr>
             </thead>
             <tbody>
@@ -149,7 +149,7 @@ function fmtTime(iso: string) {
                     </span>
                   </td>
                   <td>{{ resultSummary(r) }}</td>
-                  <td>
+                  <td style="text-align: right">
                     <button class="btn btn-sm" @click="toggleCode(r.id)">
                       {{ expandedId === r.id ? 'Hide' : 'View Code' }}
                     </button>
@@ -213,7 +213,8 @@ function fmtTime(iso: string) {
 
 <style scoped>
 .run-log-list {
-  max-width: 1100px;
+  width: 100%;
+  padding-bottom: 64px;
 }
 
 .page-header {
@@ -262,7 +263,7 @@ function fmtTime(iso: string) {
   font-size: 13px;
 }
 .filter-input {
-  width: 110px;
+  width: 130px;
 }
 .filter-input::placeholder {
   color: var(--text-muted);
@@ -272,6 +273,8 @@ function fmtTime(iso: string) {
 .empty {
   color: var(--text-muted);
   font-size: 14px;
+  padding: 32px 0;
+  text-align: center;
 }
 .error-msg {
   color: var(--status-error);
@@ -289,7 +292,7 @@ function fmtTime(iso: string) {
   font-size: 13px;
 }
 .table th {
-  padding: 10px 14px;
+  padding: 12px 16px;
   text-align: left;
   font-size: 11px;
   font-weight: 600;
@@ -300,7 +303,7 @@ function fmtTime(iso: string) {
   border-bottom: 1px solid var(--border);
 }
 .table td {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   color: var(--text-primary);
   vertical-align: middle;
