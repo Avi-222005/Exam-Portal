@@ -10,6 +10,9 @@ const props = defineProps<{
     | 'side_panel_detected'
     | 'tab_switched'
     | null;
+  isSidePanelOpen?: boolean;
+  isLockedOut?: boolean;
+  maxViolations?: number;
 }>();
 
 const emit = defineEmits<{
@@ -17,36 +20,40 @@ const emit = defineEmits<{
 }>();
 
 const titleText = computed(() => {
+  if (props.isLockedOut) return 'Assessment Terminated - Policy Violation';
   if (props.isInitialPrompt) return 'Secure Assessment Environment';
-  if (props.violationReason === 'side_panel_detected')
-    return 'Side Panel / Split Screen Detected';
+  if (props.isSidePanelOpen || props.violationReason === 'side_panel_detected')
+    return 'Side Panel Detected - Close to Continue';
   if (props.violationReason === 'blur_focus_lost')
-    return 'Window Focus Lost / Floating Window Detected';
+    return 'Window Focus Lost / External Interaction';
   if (props.violationReason === 'tab_switched')
     return 'Browser Tab Switch Detected';
   return 'Fullscreen Mode Required';
 });
 
 const descriptionText = computed(() => {
-  if (props.isInitialPrompt) {
-    return 'To ensure exam integrity, this assessment must be taken in uninterrupted Fullscreen Mode. Click the button below to start.';
+  if (props.isLockedOut) {
+    return `You have reached the maximum allowed proctoring violations (${props.maxViolations || 5}). Your assessment session has been locked and automatically submitted to ensure integrity.`;
   }
-  if (props.violationReason === 'side_panel_detected') {
-    return 'A browser side panel (such as AI sidebar / Gemini / Copilot) or split-screen window was detected. Please close all side panels, dismiss floating overlays, and return to Fullscreen Mode.';
+  if (props.isInitialPrompt) {
+    return 'To ensure exam integrity, this assessment must be taken in uninterrupted Fullscreen Mode with all browser sidebars closed. Click the button below to start.';
+  }
+  if (props.isSidePanelOpen || props.violationReason === 'side_panel_detected') {
+    return 'A browser AI side panel (Gemini / Copilot / Edge Sidebar) or split window is open. Please click the [X] button at the top-right of the sidebar to close it. The assessment will unlock once closed.';
   }
   if (props.violationReason === 'blur_focus_lost') {
-    return 'You clicked outside the test window or interacted with a floating application / external tool. The exam is paused until you refocus.';
+    return 'You clicked outside the test window or interacted with an external app / floating window. Assessment content is hidden until you refocus.';
   }
   if (props.violationReason === 'tab_switched') {
-    return 'You navigated away from the exam tab. Tab switches are strictly prohibited and recorded in your proctor log.';
+    return 'You navigated away from the exam tab. Tab switching is strictly prohibited and recorded in your proctoring audit log.';
   }
-  return 'You have exited Fullscreen Mode. The exam window is paused until you return to fullscreen.';
+  return 'You have exited Fullscreen Mode. Assessment content is paused and hidden until you return to fullscreen.';
 });
 </script>
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 select-none animate-in fade-in duration-200"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl p-4 select-none animate-in fade-in duration-200"
   >
     <div
       class="bg-white dark:bg-[#0f141f] border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 text-center p-8 flex flex-col items-center gap-5"
@@ -55,13 +62,15 @@ const descriptionText = computed(() => {
       <div
         class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
         :class="
-          isInitialPrompt
+          isLockedOut
+            ? 'bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-700'
+            : isInitialPrompt
             ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
             : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 animate-pulse'
         "
       >
         <span class="material-symbols-outlined text-[36px]">
-          {{ isInitialPrompt ? 'lock' : 'gpp_maybe' }}
+          {{ isLockedOut ? 'block' : isInitialPrompt ? 'lock' : 'gpp_maybe' }}
         </span>
       </div>
 
@@ -75,19 +84,39 @@ const descriptionText = computed(() => {
         </p>
       </div>
 
+      <!-- Action Required: Side Panel Close Callout -->
+      <div
+        v-if="!isInitialPrompt && !isLockedOut && isSidePanelOpen"
+        class="w-full bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/80 rounded-xl p-3.5 text-left flex items-start gap-3 shadow-xs animate-bounce duration-1000"
+      >
+        <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-[20px] flex-shrink-0 mt-0.5">
+          close_fullscreen
+        </span>
+        <div class="text-[11px] text-amber-900 dark:text-amber-200 leading-normal">
+          <p class="font-bold mb-0.5">Sidebar Still Open</p>
+          <p>Click the <strong>✕ (Close)</strong> button at the top-right of your sidebar (Gemini / Copilot). The exam will allow resuming only after it is closed.</p>
+        </div>
+      </div>
+
       <!-- Warning Counter Pill (if exited during test) -->
       <div
         v-if="!isInitialPrompt && violationCount > 0"
-        class="px-4 py-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 rounded-xl text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 shadow-xs"
+        class="px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs"
+        :class="
+          isLockedOut
+            ? 'bg-rose-600 text-white font-bold'
+            : 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300'
+        "
       >
         <span class="material-symbols-outlined text-[18px]">warning</span>
         <span>
-          Recorded Violations / Focus Losses: <strong>{{ violationCount }}</strong>
+          Violations: <strong>{{ violationCount }} / {{ maxViolations || 5 }}</strong>
         </span>
       </div>
 
       <!-- Rules List -->
       <div
+        v-if="!isLockedOut"
         class="w-full text-left bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-[11px] text-slate-600 dark:text-slate-300 flex flex-col gap-2"
       >
         <div class="flex items-center gap-2 text-slate-900 dark:text-white font-bold">
@@ -97,19 +126,33 @@ const descriptionText = computed(() => {
         <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
           <li>Close all browser sidebars (Gemini, Copilot, extensions) and floating overlays.</li>
           <li>Do not press Escape or click into outside apps / windows.</li>
-          <li>Clipboard pasting from external sources and right-clicking are blocked.</li>
+          <li>Exam questions are hidden from the DOM whenever focus is lost.</li>
         </ul>
       </div>
 
       <!-- Action Button -->
       <button
+        v-if="!isLockedOut"
         type="button"
-        class="w-full py-3 bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm rounded-xl shadow-md transition-all duration-150 cursor-pointer flex items-center justify-center gap-2"
+        class="w-full py-3 font-bold text-sm rounded-xl shadow-md transition-all duration-150 flex items-center justify-center gap-2"
+        :class="
+          isSidePanelOpen
+            ? 'bg-amber-600 hover:bg-amber-700 text-white cursor-pointer'
+            : 'bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 text-white cursor-pointer'
+        "
         @click="emit('enter-fullscreen')"
       >
-        <span class="material-symbols-outlined text-[20px]">fullscreen</span>
+        <span class="material-symbols-outlined text-[20px]">
+          {{ isSidePanelOpen ? 'refresh' : 'fullscreen' }}
+        </span>
         <span>
-          {{ isInitialPrompt ? 'Start Test in Fullscreen Mode' : 'Refocus & Return to Fullscreen' }}
+          {{
+            isInitialPrompt
+              ? 'Start Test in Fullscreen Mode'
+              : isSidePanelOpen
+              ? 'I have closed the sidebar — Resume Fullscreen'
+              : 'Refocus & Return to Fullscreen'
+          }}
         </span>
       </button>
     </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Problem } from '../../types';
+import ObfuscatedText from './ObfuscatedText.vue';
 
 const props = defineProps<{
   problem: Problem;
@@ -71,7 +72,7 @@ function formatImageSrc(data: string | null | undefined): string {
           Problem Statement
         </h3>
         <div class="text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed select-none pointer-events-none scalable-text">
-          {{ problem.description || problem.title }}
+          <ObfuscatedText :text="problem.description || problem.title" />
         </div>
 
         <!-- Question Image Diagram -->

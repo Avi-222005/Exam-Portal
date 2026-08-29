@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, type Ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 
@@ -7,6 +7,8 @@ export type ViolationType =
   | 'blur_focus_lost'
   | 'side_panel_detected'
   | 'tab_switched';
+
+export const MAX_ALLOWED_VIOLATIONS = 5;
 
 export function useFullscreenGuard(
   examIdSource?: Ref<number | string | undefined> | (() => number | string | undefined),
@@ -28,15 +30,43 @@ export function useFullscreenGuard(
   const violationCount = ref(0);
   const showGuardModal = ref(false);
   const currentViolationReason = ref<ViolationType | null>(null);
+  const isSidePanelOpen = ref(false);
 
   // Tracks if the user is currently in an active paused/violation modal state
   // to prevent duplicate or timer-like repeating increments
   const isCurrentlyViolating = ref(false);
 
+  let pollInterval: number | null = null;
+
+  const isLockedOut = computed(() => violationCount.value >= MAX_ALLOWED_VIOLATIONS);
+
+  // Shield flag: whenever modal is visible, focus is lost, or not in fullscreen,
+  // question and code editor content must be completely unmounted from the DOM!
+  const isQuestionContentHidden = computed(() => {
+    return (
+      !isStarted.value ||
+      showGuardModal.value ||
+      isCurrentlyViolating.value ||
+      isLockedOut.value ||
+      !isFullscreen.value
+    );
+  });
+
+  function checkSidePanelStatus(): boolean {
+    if (typeof window === 'undefined') return false;
+    // Side panels (Chrome Gemini, Edge Copilot, etc.) reduce innerWidth by 300px-500px
+    return (
+      window.screen.width > 600 &&
+      (window.screen.width - window.innerWidth > 140 ||
+        window.outerWidth - window.innerWidth > 140)
+    );
+  }
+
   function loadPersistedState() {
     const violations = parseInt(localStorage.getItem(getViolationsKey()) || '0', 10);
     violationCount.value = violations;
     isFullscreen.value = Boolean(document.fullscreenElement);
+    isSidePanelOpen.value = checkSidePanelStatus();
   }
 
   function logViolationToBackend(reason: ViolationType, count: number) {
@@ -79,19 +109,22 @@ export function useFullscreenGuard(
     const activeFs = Boolean(document.fullscreenElement);
     isFullscreen.value = activeFs;
 
+    const sidePanelActive = checkSidePanelStatus();
+    isSidePanelOpen.value = sidePanelActive;
+
     if (!isStarted.value) return;
+
+    if (isLockedOut.value) {
+      showGuardModal.value = true;
+      return;
+    }
 
     if (!activeFs) {
       triggerViolation('fullscreen_exit');
       return;
     }
 
-    // Side panel detection: if browser side-panel is opened, viewport width shrinks significantly (>200px)
-    const isSidePanelOpen =
-      screen.width > 600 &&
-      (screen.width - window.innerWidth > 200 || window.outerWidth - window.innerWidth > 200);
-
-    if (isSidePanelOpen) {
+    if (sidePanelActive) {
       triggerViolation('side_panel_detected');
       return;
     }
@@ -121,7 +154,6 @@ export function useFullscreenGuard(
   }
 
   function handleResize() {
-    if (!isStarted.value) return;
     checkFullscreenState();
   }
 
@@ -243,7 +275,17 @@ export function useFullscreenGuard(
     }
   }
 
-  async function enterFullscreen() {
+  async function enterFullscreen(): Promise<boolean> {
+    if (isLockedOut.value) return false;
+
+    // Hard Gate: If browser side panel is still open, refuse to resume!
+    if (checkSidePanelStatus()) {
+      isSidePanelOpen.value = true;
+      currentViolationReason.value = 'side_panel_detected';
+      showGuardModal.value = true;
+      return false;
+    }
+
     try {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
@@ -252,13 +294,17 @@ export function useFullscreenGuard(
       isFullscreen.value = true;
       isCurrentlyViolating.value = false;
       showGuardModal.value = false;
+      isSidePanelOpen.value = false;
       currentViolationReason.value = null;
+      return true;
     } catch (err) {
       console.warn('[fullscreen] Could not enter fullscreen mode', err);
       isStarted.value = true;
       isCurrentlyViolating.value = false;
       showGuardModal.value = false;
+      isSidePanelOpen.value = false;
       currentViolationReason.value = null;
+      return true;
     }
   }
 
@@ -279,6 +325,7 @@ export function useFullscreenGuard(
     isCurrentlyViolating.value = false;
     violationCount.value = 0;
     currentViolationReason.value = null;
+    isSidePanelOpen.value = false;
   }
 
   watch(
@@ -300,9 +347,24 @@ export function useFullscreenGuard(
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('blur', handleBlur);
     window.addEventListener('resize', handleResize);
+
+    // Active polling to track sidebar closure in real time
+    pollInterval = window.setInterval(() => {
+      const sidePanelActive = checkSidePanelStatus();
+      isSidePanelOpen.value = sidePanelActive;
+
+      if (isStarted.value) {
+        if (sidePanelActive && !isCurrentlyViolating.value) {
+          triggerViolation('side_panel_detected');
+        } else if (!document.hasFocus() && !isCurrentlyViolating.value) {
+          triggerViolation('blur_focus_lost');
+        }
+      }
+    }, 400);
   });
 
   onUnmounted(() => {
+    if (pollInterval) clearInterval(pollInterval);
     document.removeEventListener('fullscreenchange', checkFullscreenState);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     document.removeEventListener('contextmenu', handleContextMenu);
@@ -320,6 +382,10 @@ export function useFullscreenGuard(
     showGuardModal,
     violationCount,
     currentViolationReason,
+    isSidePanelOpen,
+    isLockedOut,
+    maxViolations: MAX_ALLOWED_VIOLATIONS,
+    isQuestionContentHidden,
     isStarted,
     enterFullscreen,
     exitFullscreen,

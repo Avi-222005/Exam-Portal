@@ -36,11 +36,26 @@ const {
   showGuardModal,
   violationCount,
   currentViolationReason,
+  isSidePanelOpen,
+  isLockedOut,
+  maxViolations,
+  isQuestionContentHidden,
   isStarted,
   enterFullscreen,
   exitFullscreen,
   clearSession,
 } = useFullscreenGuard(computed(() => examStore.activeExam?.id));
+
+// Auto-submit when maximum violations are reached
+watch(isLockedOut, (locked) => {
+  if (locked && !isSubmittingTest.value) {
+    toastStore.add(
+      'error',
+      'Assessment terminated due to exceeding maximum allowed proctoring violations.',
+    );
+    void handleConfirmSubmitTest();
+  }
+});
 
 // Section & Marks Metrics for Overview Modal
 const mcqProblems = computed(() =>
@@ -384,7 +399,28 @@ async function handleConfirmSubmitTest() {
 
       <!-- ── Center Split Area: Problem & Answer ────────────────────── -->
       <div class="flex-1 flex min-w-0 h-full overflow-hidden relative">
-        <template v-if="currentProblem">
+        <!-- If paused / focus lost / side panel open, UNMOUNT question content completely from DOM -->
+        <div
+          v-if="isQuestionContentHidden"
+          class="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-3 p-8 text-center select-none"
+          aria-hidden="true"
+        >
+          <div
+            class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-xs"
+          >
+            <span class="material-symbols-outlined text-2xl text-slate-500">lock</span>
+          </div>
+          <div class="flex flex-col gap-1 max-w-xs">
+            <p class="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Assessment Content Protected
+            </p>
+            <p class="text-[11px] text-slate-500 leading-normal">
+              Question statement is hidden while proctoring guard or side panel is active.
+            </p>
+          </div>
+        </div>
+
+        <template v-else-if="currentProblem">
           <!-- MCQ Question Layout -->
           <div
             v-if="currentProblem.questionType === 'mcq'"
@@ -491,10 +527,13 @@ async function handleConfirmSubmitTest() {
 
     <!-- ── Fullscreen Proctoring Guard Modal ───────────────────────── -->
     <FullscreenGuardModal
-      v-else-if="!isStarted || showGuardModal || !isFullscreen"
+      v-else-if="!isStarted || showGuardModal || !isFullscreen || isLockedOut"
       :is-initial-prompt="!isStarted"
       :violation-count="violationCount"
       :violation-reason="currentViolationReason"
+      :is-side-panel-open="isSidePanelOpen"
+      :is-locked-out="isLockedOut"
+      :max-violations="maxViolations"
       @enter-fullscreen="enterFullscreen"
     />
   </div>

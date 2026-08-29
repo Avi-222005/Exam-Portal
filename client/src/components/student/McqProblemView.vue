@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import type { Problem } from '../../types';
 import { useUiStore } from '../../stores/ui';
+import ObfuscatedText from './ObfuscatedText.vue';
 
 const props = defineProps<{
   problem: Problem;
@@ -81,7 +82,7 @@ function formatImageSrc(data: string | null | undefined): string {
         <div
           class="text-slate-800 dark:text-slate-200 whitespace-pre-line leading-relaxed text-sm font-normal select-none pointer-events-none scalable-text"
         >
-          {{ problem.description || problem.title }}
+          <ObfuscatedText :text="problem.description || problem.title" />
         </div>
 
         <!-- Question Image Diagram -->
@@ -171,7 +172,7 @@ function formatImageSrc(data: string | null | undefined): string {
             <span
               class="text-xs font-medium text-slate-800 dark:text-slate-200 leading-normal select-none pointer-events-none scalable-text"
             >
-              {{ opt.text }}
+              <ObfuscatedText :text="opt.text" />
             </span>
 
             <div
