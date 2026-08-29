@@ -69,7 +69,7 @@ async function onDelete() {
 </script>
 
 <template>
-  <div class="max-w-[960px]">
+  <div class="w-full pb-16">
     <div
       class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3"
     >

@@ -385,7 +385,7 @@ const difficultyClass: Record<string, string> = {
 </script>
 
 <template>
-  <div class="max-w-[1250px] pb-24">
+  <div class="w-full pb-24">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
       <div>

@@ -98,7 +98,7 @@ function truncate(str: string, len = 50) {
 </script>
 
 <template>
-  <div class="max-w-[1100px]">
+  <div class="w-full pb-16">
     <div
       class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3"
     >

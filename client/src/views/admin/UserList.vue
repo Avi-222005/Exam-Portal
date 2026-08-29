@@ -103,25 +103,25 @@ function formatDate(iso: string) {
 </script>
 
 <template>
-  <div class="max-w-[1000px]">
+  <div class="w-full pb-16">
     <div
       class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3"
     >
       <div class="flex items-center gap-2.5">
         <h2 class="text-xl font-bold text-slate-900 dark:text-white">Users</h2>
         <span
-          class="bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] rounded-full px-2 py-0.5 text-xs font-semibold text-slate-500"
+          class="bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] rounded-full px-2.5 py-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400"
           >{{ total }}</span
         >
       </div>
       <div class="flex flex-wrap items-center gap-2.5">
         <input
           v-model="search"
-          class="px-3 py-1.5 border border-slate-200 dark:border-white/[0.08] rounded-lg bg-slate-50 dark:bg-background-dark text-slate-900 dark:text-white text-[13px] w-full sm:w-44 placeholder-slate-400 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none"
-          placeholder="Search users…"
+          class="px-3.5 py-1.5 border border-slate-200 dark:border-white/[0.08] rounded-lg bg-slate-50 dark:bg-background-dark text-slate-900 dark:text-white text-[13px] w-full sm:w-64 placeholder-slate-400 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all"
+          placeholder="Search users by name, email, roll…"
         />
         <button
-          class="px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-colors"
+          class="px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-colors cursor-pointer"
           :class="
             qaFilterOnly
               ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
@@ -161,60 +161,60 @@ function formatDate(iso: string) {
       </button>
     </div>
 
-    <div v-if="loading" class="text-sm text-slate-400">Loading…</div>
-    <div v-else-if="error" class="text-sm text-red-400">{{ error }}</div>
+    <div v-if="loading" class="text-sm text-slate-400 py-8 text-center">Loading users…</div>
+    <div v-else-if="error" class="text-sm text-red-400 py-4">{{ error }}</div>
 
     <template v-else>
-      <div v-if="users.length === 0" class="text-sm text-slate-400">
-        No users registered yet.
+      <div v-if="users.length === 0" class="text-sm text-slate-400 py-8 text-center border border-dashed border-slate-200 dark:border-white/[0.06] rounded-xl">
+        No users found for this filter.
       </div>
 
       <template v-else>
         <!-- Desktop table -->
         <div
-          class="hidden sm:block overflow-x-auto border border-slate-200 dark:border-white/[0.06] rounded-xl"
+          class="hidden sm:block overflow-x-auto border border-slate-200 dark:border-white/[0.06] rounded-xl bg-white dark:bg-surface-dark/40 shadow-sm"
         >
-          <table class="w-full text-[13px]">
+          <table class="w-full text-[13px] border-collapse">
             <thead>
               <tr>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Roll No
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Name
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Email
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Role
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Phone
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Registered
                 </th>
                 <th
-                  class="px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+                  class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                 >
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-100 dark:divide-white/[0.04]">
               <tr
                 v-for="u in users"
                 :key="u.id"
@@ -224,42 +224,42 @@ function formatDate(iso: string) {
                 "
               >
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 align-middle font-mono text-xs text-slate-500"
+                  class="px-4 py-3.5 text-slate-700 dark:text-slate-300 align-middle font-mono text-xs font-medium"
                 >
                   {{ u.rollNumber }}
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 align-middle font-medium"
+                  class="px-4 py-3.5 text-slate-900 dark:text-white align-middle font-medium"
                 >
                   {{ u.firstName }} {{ u.lastName }}
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] align-middle text-slate-500"
+                  class="px-4 py-3.5 align-middle text-slate-600 dark:text-slate-400"
                 >
                   {{ u.email }}
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 align-middle"
+                  class="px-4 py-3.5 text-slate-900 dark:text-slate-200 align-middle"
                 >
                   <span
-                    class="inline-flex px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider"
+                    class="inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider"
                     :class="
                       u.role === 'SUPER_ADMIN'
                         ? 'bg-amber-500/15 text-amber-500 dark:text-amber-300 border border-amber-500/30'
                         : u.role === 'ADMIN'
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-slate-500/10 text-slate-400'
+                          ? 'bg-primary/10 text-primary border border-primary/20'
+                          : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
                     "
                     >{{ u.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : u.role }}</span
                   >
                   <span
                     v-if="u.metadata?.qaRoleOptIn"
-                    class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 ml-1"
+                    class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 ml-1.5"
                     >QA</span
                   >
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] align-middle text-slate-500"
+                  class="px-4 py-3.5 align-middle text-slate-500 dark:text-slate-400 text-xs font-mono"
                 >
                   {{
                     u.countryCode && u.phoneNumber
@@ -268,15 +268,15 @@ function formatDate(iso: string) {
                   }}
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 align-middle font-mono text-xs text-slate-500"
+                  class="px-4 py-3.5 align-middle font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap"
                 >
                   {{ formatDate(u.createdAt) }}
                 </td>
                 <td
-                  class="px-3.5 py-3 border-b border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 align-middle"
+                  class="px-4 py-3.5 align-middle text-right"
                   @click.stop
                 >
-                  <div class="flex gap-1.5 items-center">
+                  <div class="flex gap-1.5 items-center justify-end">
                     <RegalButton
                       @click="
                         router.push({
