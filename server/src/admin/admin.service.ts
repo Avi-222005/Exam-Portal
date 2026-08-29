@@ -53,6 +53,10 @@ export class AdminService {
     private readonly enrollmentRepo: Repository<ExamEnrollment>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Submission)
+    private readonly submissionRepo: Repository<Submission>,
+    @InjectRepository(RunLog)
+    private readonly runLogRepo: Repository<RunLog>,
     private readonly usersService: UsersService,
     private readonly submissionsService: SubmissionsService,
     private readonly scoringService: ScoringService,
@@ -63,15 +67,10 @@ export class AdminService {
   ) {}
 
   private statsCache: {
-    data: {
-      totalExams: number;
-      activeExams: { id: number; title: string }[];
-      totalStudents: number;
-      totalSubmissions: number;
-    };
+    data: any;
     expiresAt: number;
   } | null = null;
-  private static STATS_TTL_MS = 30_000;
+  private static STATS_TTL_MS = 10_000;
 
   // --- Stats ---
 
@@ -80,24 +79,94 @@ export class AdminService {
       return this.statsCache.data;
     }
 
-    const [totalExams, activeExamResults, totalStudents, totalSubmissions] =
-      await Promise.all([
-        this.examRepo.count(),
-        this.examRepo.find({
-          where: { isActive: true, endTime: MoreThan(new Date()) },
-        }),
-        this.usersService.count(true),
-        this.submissionsService.count(),
-      ]);
+    const [
+      totalExams,
+      activeExamResults,
+      recentExams,
+      totalStudents,
+      totalAdmins,
+      totalSubmissions,
+      acceptedSubmissions,
+      totalProblems,
+      totalRunLogs,
+      recentSubmissions,
+    ] = await Promise.all([
+      this.examRepo.count(),
+      this.examRepo.find({
+        where: { isActive: true, endTime: MoreThan(new Date()) },
+        order: { startTime: 'ASC' },
+      }),
+      this.examRepo.find({
+        order: { createdAt: 'DESC' },
+        take: 4,
+      }),
+      this.usersService.count(true),
+      this.userRepo.count({
+        where: { role: In([UserRole.ADMIN, UserRole.SUPER_ADMIN]) },
+      }),
+      this.submissionsService.count(),
+      this.submissionRepo.count({ where: { verdict: 'accepted' } }),
+      this.problemRepo.count(),
+      this.runLogRepo.count(),
+      this.submissionRepo.find({
+        order: { submittedAt: 'DESC' },
+        take: 6,
+        relations: ['user', 'exam', 'problem'],
+      }),
+    ]);
+
+    const acceptanceRate =
+      totalSubmissions > 0
+        ? Number(((acceptedSubmissions / totalSubmissions) * 100).toFixed(1))
+        : 0;
 
     const data = {
       totalExams,
       activeExams: activeExamResults.map((e) => ({
         id: e.id,
         title: e.title,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        accessType: e.accessType,
+        maxViolations: e.maxViolations,
+      })),
+      recentExams: recentExams.map((e) => ({
+        id: e.id,
+        title: e.title,
+        isActive: e.isActive,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        accessType: e.accessType,
+        createdAt: e.createdAt,
       })),
       totalStudents,
+      totalAdmins,
       totalSubmissions,
+      acceptedSubmissions,
+      acceptanceRate,
+      totalProblems,
+      totalRunLogs,
+      recentSubmissions: recentSubmissions.map((s) => ({
+        id: s.id,
+        verdict: s.verdict,
+        language: s.language,
+        score: s.score,
+        passedTestCases: s.passedTestCases,
+        totalTestCases: s.totalTestCases,
+        submittedAt: s.submittedAt,
+        user: s.user
+          ? {
+              id: s.user.id,
+              rollNumber: s.user.rollNumber,
+              firstName: s.user.firstName,
+              lastName: s.user.lastName,
+            }
+          : null,
+        exam: s.exam ? { id: s.exam.id, title: s.exam.title } : null,
+        problem: s.problem
+          ? { id: s.problem.id, title: s.problem.title }
+          : null,
+      })),
     };
 
     this.statsCache = {

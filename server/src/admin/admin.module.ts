@@ -18,6 +18,8 @@ import { AutosaveModule } from '../autosave/autosave.module';
 
 import { ExamEnrollment } from '../entities/exam-enrollment.entity';
 import { User } from '../entities/user.entity';
+import { Submission } from '../entities/submission.entity';
+import { RunLog } from '../entities/run-log.entity';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { User } from '../entities/user.entity';
       ProblemToExam,
       ExamEnrollment,
       User,
+      Submission,
+      RunLog,
     ]),
     UsersModule,
     SubmissionsModule,

@@ -2,9 +2,42 @@ import type { Problem } from './index';
 
 export interface AdminStats {
   totalExams: number;
-  activeExams: { id: number; title: string }[];
+  activeExams: {
+    id: number;
+    title: string;
+    startTime?: string;
+    endTime?: string;
+    accessType?: string;
+    maxViolations?: number;
+  }[];
+  recentExams?: {
+    id: number;
+    title: string;
+    isActive: boolean;
+    startTime: string;
+    endTime: string;
+    accessType?: string;
+    createdAt: string;
+  }[];
   totalStudents: number;
+  totalAdmins?: number;
   totalSubmissions: number;
+  acceptedSubmissions?: number;
+  acceptanceRate?: number;
+  totalProblems?: number;
+  totalRunLogs?: number;
+  recentSubmissions?: {
+    id: number;
+    verdict: string;
+    language: string;
+    score: number;
+    passedTestCases?: number;
+    totalTestCases?: number;
+    submittedAt: string;
+    user?: { id: number; rollNumber: string; firstName: string; lastName: string } | null;
+    exam?: { id: number; title: string } | null;
+    problem?: { id: number; title: string } | null;
+  }[];
 }
 
 export interface ExamWithProblems {
