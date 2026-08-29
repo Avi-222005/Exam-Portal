@@ -12,6 +12,40 @@ const authStore = useAuthStore();
 
 const isSuperAdmin = computed(() => authStore.user?.role === 'SUPER_ADMIN');
 const isEdit = computed(() => !!route.params.id);
+const isTargetSelf = computed(
+  () => isEdit.value && authStore.user?.id === Number(route.params.id),
+);
+const originalRole = ref<'STUDENT' | 'ADMIN' | 'SUPER_ADMIN'>('STUDENT');
+const isTargetSuperAdmin = computed(
+  () => isEdit.value && originalRole.value === 'SUPER_ADMIN',
+);
+
+const isRoleDisabled = computed(() => {
+  if (!isEdit.value) return !isSuperAdmin.value;
+  if (isTargetSelf.value) return true;
+  if (isTargetSuperAdmin.value) return true;
+  if (!isSuperAdmin.value) return true;
+  return false;
+});
+
+const roleNotice = computed(() => {
+  if (!isEdit.value && !isSuperAdmin.value) {
+    return 'Admin creation is restricted to Super Admins';
+  }
+  if (isEdit.value) {
+    if (isTargetSelf.value) {
+      return 'You cannot change your own role';
+    }
+    if (isTargetSuperAdmin.value) {
+      return 'Super Administrator role is immutable';
+    }
+    if (!isSuperAdmin.value) {
+      return 'Only Super Administrators can modify user roles';
+    }
+  }
+  return '';
+});
+
 const loading = ref(false);
 const saving = ref(false);
 const error = ref('');
@@ -30,6 +64,9 @@ const form = ref({
 });
 
 const roleOptions = computed(() => {
+  if (form.value.role === 'SUPER_ADMIN') {
+    return [{ value: 'SUPER_ADMIN', label: 'SUPER ADMIN' }];
+  }
   if (isSuperAdmin.value) {
     return [
       { value: 'STUDENT', label: 'STUDENT' },
@@ -44,6 +81,7 @@ onMounted(async () => {
   loading.value = true;
   try {
     const u = await getUser(Number(route.params.id));
+    originalRole.value = u.role ?? 'STUDENT';
     form.value = {
       rollNumber: u.rollNumber ?? '',
       firstName: u.firstName ?? '',
@@ -76,7 +114,7 @@ async function save() {
         email: form.value.email,
         countryCode: form.value.countryCode || undefined,
         phoneNumber: form.value.phoneNumber || undefined,
-        role: form.value.role,
+        role: isRoleDisabled.value ? undefined : form.value.role,
       });
     } else {
       await createUser({
@@ -257,18 +295,18 @@ function extractError(err: unknown): { message: string; raw: string } {
             >Role</label
           >
           <span
-            v-if="!isSuperAdmin"
+            v-if="roleNotice"
             class="text-[11px] text-amber-500/90 flex items-center gap-1 font-medium"
           >
             <span class="material-symbols-outlined text-[13px]">lock</span>
-            Admin role creation is restricted to Super Admins
+            {{ roleNotice }}
           </span>
         </div>
         <RegalSelect
           v-model="form.role"
           :options="roleOptions"
           placeholder="Select role…"
-          :disabled="!isSuperAdmin && !isEdit"
+          :disabled="isRoleDisabled"
         />
       </div>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../stores/auth';
 import { listUsers, deleteUser } from '../../services/adminApi';
 import type { AdminUser } from '../../types/admin';
 import ConfirmModal from '../../components/shared/ConfirmModal.vue';
@@ -10,6 +11,15 @@ import { usePagination } from '../../composables/usePagination';
 import { PAGE_LIMIT } from '../../constants';
 
 const router = useRouter();
+const authStore = useAuthStore();
+const isSuperAdmin = computed(() => authStore.user?.role === 'SUPER_ADMIN');
+
+function canDelete(u: AdminUser): boolean {
+  if (u.role === 'SUPER_ADMIN') return false;
+  if (u.id === authStore.user?.id) return false;
+  if (u.role === 'ADMIN' && !isSuperAdmin.value) return false;
+  return true;
+}
 
 const search = ref('');
 const qaFilterOnly = ref(false);
@@ -229,7 +239,11 @@ function formatDate(iso: string) {
                     >
                       Edit
                     </RegalButton>
-                    <RegalButton variant="danger" @click="confirmDelete = u">
+                    <RegalButton
+                      v-if="canDelete(u)"
+                      variant="danger"
+                      @click="confirmDelete = u"
+                    >
                       Delete
                     </RegalButton>
                   </div>
@@ -286,7 +300,10 @@ function formatDate(iso: string) {
                 "
                 >Edit</RegalButton
               >
-              <RegalButton variant="danger" @click="confirmDelete = u"
+              <RegalButton
+                v-if="canDelete(u)"
+                variant="danger"
+                @click="confirmDelete = u"
                 >Delete</RegalButton
               >
             </div>

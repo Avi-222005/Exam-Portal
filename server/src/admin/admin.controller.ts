@@ -339,18 +339,31 @@ export class AdminController {
   @Get('users')
   @Auth(AuthType.JWT, [AdminGuard])
   async listUsers(
+    @GetUser() adminUser: User,
     @Query() pagination: PaginationDto,
     @Query('qaRoleOptIn') qaRoleOptIn?: string,
   ) {
     return this.usersService.findAll(pagination, {
       qaRoleOptIn: qaRoleOptIn === 'true',
+      requestingUser: adminUser,
     });
   }
 
   @Get('users/:id')
   @Auth(AuthType.JWT, [AdminGuard])
-  async getUser(@Param('id', ParseIntPipe) id: number) {
+  async getUser(
+    @GetUser() adminUser: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     const user = await this.usersService.findByIdOrFail(id);
+    if (
+      user.role === UserRole.SUPER_ADMIN &&
+      adminUser.role !== UserRole.SUPER_ADMIN
+    ) {
+      throw new ForbiddenException(
+        'Access denied: You do not have permission to view Super Administrator accounts.',
+      );
+    }
     const result = { ...user } as Record<string, unknown>;
     delete result.password;
     return result;
@@ -368,16 +381,20 @@ export class AdminController {
   @Put('users/:id')
   @Auth(AuthType.JWT, [AdminGuard])
   async updateUser(
+    @GetUser() adminUser: User,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
   ) {
-    return this.usersService.update(id, dto);
+    return this.usersService.update(id, dto, adminUser);
   }
 
   @Delete('users/:id')
   @Auth(AuthType.JWT, [AdminGuard])
-  async deleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.delete(id);
+  async deleteUser(
+    @GetUser() adminUser: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.usersService.delete(id, adminUser);
   }
 
   // --- Submissions ---

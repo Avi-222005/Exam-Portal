@@ -108,7 +108,7 @@ export class UsersService {
 
   async findAll(
     pagination?: PaginationDto,
-    options?: { qaRoleOptIn?: boolean },
+    options?: { qaRoleOptIn?: boolean; requestingUser?: User },
   ): Promise<PaginatedResponse<User>> {
     const page = pagination?.page ?? 1;
     const limit = Math.min(pagination?.limit ?? 10, 100);
@@ -117,6 +117,13 @@ export class UsersService {
     const qb = this.userRepo
       .createQueryBuilder('user')
       .orderBy('user.createdAt', 'DESC');
+
+    // If requesting user is a regular Admin (not Super Admin), hide all Super Admin accounts
+    if (options?.requestingUser && options.requestingUser.role !== UserRole.SUPER_ADMIN) {
+      qb.andWhere('user.role != :superAdminRole', {
+        superAdminRole: UserRole.SUPER_ADMIN,
+      });
+    }
 
     if (search) {
       qb.andWhere(
@@ -197,8 +204,66 @@ export class UsersService {
     }
   }
 
-  async update(id: number, dto: UpdateUserDto): Promise<User> {
+  async update(
+    id: number,
+    dto: UpdateUserDto,
+    requestingAdmin?: User,
+  ): Promise<User> {
     const user = await this.findByIdOrFail(id);
+
+    if (requestingAdmin) {
+      // 1. Regular admin cannot modify Super Admin accounts
+      if (
+        user.role === UserRole.SUPER_ADMIN &&
+        requestingAdmin.role !== UserRole.SUPER_ADMIN
+      ) {
+        throw new ForbiddenException(
+          'Access denied: You do not have permission to modify Super Administrator accounts.',
+        );
+      }
+
+      // 2. Super Admin role is permanent and immutable
+      if (
+        user.role === UserRole.SUPER_ADMIN &&
+        dto.role !== undefined &&
+        dto.role !== UserRole.SUPER_ADMIN
+      ) {
+        throw new BadRequestException(
+          'The Super Administrator role is permanent and cannot be modified.',
+        );
+      }
+
+      // 3. Prevent any user (Admin or Super Admin) from modifying their own role
+      if (
+        user.id === requestingAdmin.id &&
+        dto.role !== undefined &&
+        dto.role !== user.role
+      ) {
+        throw new BadRequestException('You cannot modify your own role.');
+      }
+
+      // 4. Regular Admins cannot change user roles
+      if (
+        dto.role !== undefined &&
+        dto.role !== user.role &&
+        requestingAdmin.role !== UserRole.SUPER_ADMIN
+      ) {
+        throw new ForbiddenException(
+          'Permission denied: Only Super Administrators have permission to modify user roles.',
+        );
+      }
+
+      // 5. Nobody can promote anyone to Super Admin
+      if (
+        dto.role === UserRole.SUPER_ADMIN &&
+        user.role !== UserRole.SUPER_ADMIN
+      ) {
+        throw new BadRequestException(
+          'The Super Administrator role cannot be assigned.',
+        );
+      }
+    }
+
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.email !== undefined) user.email = dto.email;
@@ -217,8 +282,30 @@ export class UsersService {
     return this.userRepo.save(user);
   }
 
-  async delete(id: number): Promise<{ deleted: true }> {
+  async delete(id: number, requestingAdmin?: User): Promise<{ deleted: true }> {
     const user = await this.findByIdOrFail(id);
+
+    if (user.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Super Administrator accounts cannot be deleted.',
+      );
+    }
+
+    if (requestingAdmin) {
+      if (user.id === requestingAdmin.id) {
+        throw new BadRequestException('You cannot delete your own account.');
+      }
+
+      if (
+        user.role === UserRole.ADMIN &&
+        requestingAdmin.role !== UserRole.SUPER_ADMIN
+      ) {
+        throw new ForbiddenException(
+          'Permission denied: Only Super Administrators can delete Administrator accounts.',
+        );
+      }
+    }
+
     await this.userRepo.remove(user);
     return { deleted: true };
   }
