@@ -9,7 +9,6 @@ import {
   nextTick,
 } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import AppHeader from '../components/layout/AppHeader.vue';
 import Toast from '../components/shared/Toast.vue';
 import SuccessModal from '../components/shared/SuccessModal.vue';
 import ExamWorkspace from '../components/student/ExamWorkspace.vue';
@@ -207,9 +206,6 @@ function goDashboard() {
 
 <template>
   <div class="flex flex-col h-screen overflow-hidden bg-white dark:bg-bg-primary">
-    <!-- Header -->
-    <AppHeader />
-
     <!-- Loading state -->
     <div
       v-if="examState === 'loading'"
