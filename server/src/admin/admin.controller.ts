@@ -344,10 +344,12 @@ export class AdminController {
     @GetUser() adminUser: User,
     @Query() pagination: PaginationDto,
     @Query('qaRoleOptIn') qaRoleOptIn?: string,
+    @Query('role') role?: UserRole,
   ) {
     return this.usersService.findAll(pagination, {
       qaRoleOptIn: qaRoleOptIn === 'true',
       requestingUser: adminUser,
+      role,
     });
   }
 

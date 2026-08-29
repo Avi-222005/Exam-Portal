@@ -334,12 +334,13 @@ export async function deleteTestCase(id: number): Promise<void> {
 
 export async function listUsers(
   pagination?: PaginationParams,
-  options?: { qaRoleOptIn?: boolean },
+  options?: { qaRoleOptIn?: boolean; role?: 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN' },
 ): Promise<PaginatedResponse<AdminUser>> {
   const { data } = await api.get<PaginatedResponse<AdminUser>>('/admin/users', {
     params: {
       ...pagination,
       ...(options?.qaRoleOptIn ? { qaRoleOptIn: 'true' } : {}),
+      ...(options?.role ? { role: options.role } : {}),
     },
   });
   return data;

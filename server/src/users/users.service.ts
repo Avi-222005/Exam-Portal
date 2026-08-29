@@ -108,7 +108,7 @@ export class UsersService {
 
   async findAll(
     pagination?: PaginationDto,
-    options?: { qaRoleOptIn?: boolean; requestingUser?: User },
+    options?: { qaRoleOptIn?: boolean; requestingUser?: User; role?: UserRole },
   ): Promise<PaginatedResponse<User>> {
     const page = pagination?.page ?? 1;
     const limit = Math.min(pagination?.limit ?? 10, 100);
@@ -123,6 +123,10 @@ export class UsersService {
       qb.andWhere('user.role != :superAdminRole', {
         superAdminRole: UserRole.SUPER_ADMIN,
       });
+    }
+
+    if (options?.role) {
+      qb.andWhere('user.role = :roleFilter', { roleFilter: options.role });
     }
 
     if (search) {

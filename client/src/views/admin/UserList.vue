@@ -23,6 +23,27 @@ function canDelete(u: AdminUser): boolean {
 
 const search = ref('');
 const qaFilterOnly = ref(false);
+const selectedRole = ref<'ALL' | 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN'>('ALL');
+
+const roleTabs = computed(() => {
+  const tabs: Array<{
+    value: 'ALL' | 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN';
+    label: string;
+    icon: string;
+  }> = [
+    { value: 'ALL', label: 'All Users', icon: 'group' },
+    { value: 'STUDENT', label: 'Students', icon: 'school' },
+    { value: 'ADMIN', label: 'Admins', icon: 'shield_person' },
+  ];
+  if (isSuperAdmin.value) {
+    tabs.push({
+      value: 'SUPER_ADMIN',
+      label: 'Super Admins',
+      icon: 'stars',
+    });
+  }
+  return tabs;
+});
 
 const {
   items: users,
@@ -35,8 +56,15 @@ const {
   fetcher: (params) =>
     listUsers(
       { ...params, search: search.value || undefined },
-      qaFilterOnly.value ? { qaRoleOptIn: true } : undefined,
+      {
+        qaRoleOptIn: qaFilterOnly.value ? true : undefined,
+        role: selectedRole.value === 'ALL' ? undefined : selectedRole.value,
+      },
     ),
+});
+
+watch(selectedRole, () => {
+  resetAndLoad();
 });
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -77,7 +105,7 @@ function formatDate(iso: string) {
 <template>
   <div class="max-w-[1000px]">
     <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3"
+      class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3"
     >
       <div class="flex items-center gap-2.5">
         <h2 class="text-xl font-bold text-slate-900 dark:text-white">Users</h2>
@@ -111,6 +139,26 @@ function formatDate(iso: string) {
           + Add User
         </RegalButton>
       </div>
+    </div>
+
+    <!-- Role Filter Tabs -->
+    <div
+      class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] rounded-xl mb-5 overflow-x-auto"
+    >
+      <button
+        v-for="tab in roleTabs"
+        :key="tab.value"
+        class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap"
+        :class="
+          selectedRole === tab.value
+            ? 'bg-white dark:bg-primary/20 text-primary dark:text-primary shadow-sm border border-slate-200/60 dark:border-primary/40'
+            : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+        "
+        @click="selectedRole = tab.value"
+      >
+        <span class="material-symbols-outlined text-[15px]">{{ tab.icon }}</span>
+        <span>{{ tab.label }}</span>
+      </button>
     </div>
 
     <div v-if="loading" class="text-sm text-slate-400">Loading…</div>
