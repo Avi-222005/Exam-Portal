@@ -228,7 +228,10 @@ router.beforeEach((to) => {
     if (!authStore.isAuthenticated || !authStore.user) {
       return { name: 'admin-login' };
     }
-    if (authStore.user.role !== 'ADMIN') {
+    if (
+      authStore.user.role !== 'ADMIN' &&
+      authStore.user.role !== 'SUPER_ADMIN'
+    ) {
       return { name: 'student-dashboard' };
     }
     return;

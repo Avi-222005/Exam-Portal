@@ -959,7 +959,7 @@ export class AdminService {
     const user = await this.usersService.findByEmail(email);
     if (!user) throw new NotFoundException('User not found');
 
-    return this.usersService.updateRole(user.id, UserRole.ADMIN);
+    return this.usersService.updateRole(user.id, UserRole.SUPER_ADMIN);
   }
 
   async adminRegister(dto: AdminRegisterDto) {
@@ -983,7 +983,7 @@ export class AdminService {
       password: dto.password,
     });
 
-    await this.usersService.updateRole(user.id, UserRole.ADMIN);
+    await this.usersService.updateRole(user.id, UserRole.SUPER_ADMIN);
 
     const token = this.jwtService.sign({ sub: user.id }, { expiresIn: '1d' });
 
@@ -995,7 +995,7 @@ export class AdminService {
         rollNumber: user.rollNumber,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: UserRole.ADMIN,
+        role: UserRole.SUPER_ADMIN,
       },
     };
   }

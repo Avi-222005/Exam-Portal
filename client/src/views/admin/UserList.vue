@@ -186,11 +186,13 @@ function formatDate(iso: string) {
                   <span
                     class="inline-flex px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider"
                     :class="
-                      u.role === 'ADMIN'
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-slate-500/10 text-slate-400'
+                      u.role === 'SUPER_ADMIN'
+                        ? 'bg-amber-500/15 text-amber-500 dark:text-amber-300 border border-amber-500/30'
+                        : u.role === 'ADMIN'
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-slate-500/10 text-slate-400'
                     "
-                    >{{ u.role }}</span
+                    >{{ u.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : u.role }}</span
                   >
                   <span
                     v-if="u.metadata?.qaRoleOptIn"
@@ -255,11 +257,13 @@ function formatDate(iso: string) {
                 <span
                   class="inline-flex px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider"
                   :class="
-                    u.role === 'ADMIN'
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-slate-500/10 text-slate-400'
+                    u.role === 'SUPER_ADMIN'
+                      ? 'bg-amber-500/15 text-amber-500 dark:text-amber-300 border border-amber-500/30'
+                      : u.role === 'ADMIN'
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-slate-500/10 text-slate-400'
                   "
-                  >{{ u.role }}</span
+                  >{{ u.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : u.role }}</span
                 >
                 <span
                   v-if="u.metadata?.qaRoleOptIn"

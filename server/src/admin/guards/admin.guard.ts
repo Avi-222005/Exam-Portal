@@ -18,7 +18,10 @@ export class AdminGuard implements CanActivate {
     const request = ctx.switchToHttp().getRequest<RequestWithUser>();
     const user = request.user;
 
-    if (!user || user.role !== UserRole.ADMIN) {
+    if (
+      !user ||
+      (user.role !== UserRole.ADMIN && user.role !== UserRole.SUPER_ADMIN)
+    ) {
       throw new ForbiddenException('Admin access required');
     }
 

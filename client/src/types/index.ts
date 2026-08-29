@@ -4,7 +4,7 @@ export interface User {
   firstName: string;
   lastName: string;
   rollNumber: string;
-  role: 'STUDENT' | 'ADMIN';
+  role: 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN';
   metadata?: Record<string, string | number | boolean>;
 }
 

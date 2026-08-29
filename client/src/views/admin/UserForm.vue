@@ -3,11 +3,14 @@ import { ref, computed, onMounted } from 'vue';
 import RegalButton from '../../components/admin/RegalButton.vue';
 import RegalSelect from '../../components/admin/RegalSelect.vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '../../stores/auth';
 import { getUser, createUser, updateUser } from '../../services/adminApi';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 
+const isSuperAdmin = computed(() => authStore.user?.role === 'SUPER_ADMIN');
 const isEdit = computed(() => !!route.params.id);
 const loading = ref(false);
 const saving = ref(false);
@@ -22,8 +25,18 @@ const form = ref({
   password: '',
   countryCode: '',
   phoneNumber: '',
-  role: 'STUDENT' as 'STUDENT' | 'ADMIN',
+  role: 'STUDENT' as 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN',
   currentAdminPassword: '',
+});
+
+const roleOptions = computed(() => {
+  if (isSuperAdmin.value) {
+    return [
+      { value: 'STUDENT', label: 'STUDENT' },
+      { value: 'ADMIN', label: 'ADMIN' },
+    ];
+  }
+  return [{ value: 'STUDENT', label: 'STUDENT' }];
 });
 
 onMounted(async () => {
@@ -74,7 +87,7 @@ async function save() {
         password: form.value.password,
         role: form.value.role,
         currentAdminPassword:
-          form.value.role === 'ADMIN'
+          form.value.role === 'ADMIN' || form.value.role === 'SUPER_ADMIN'
             ? form.value.currentAdminPassword
             : undefined,
       });
@@ -238,41 +251,48 @@ function extractError(err: unknown): { message: string; raw: string } {
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-[13px] font-semibold text-slate-500 dark:text-slate-400"
-          >Role</label
-        >
+        <div class="flex items-center justify-between">
+          <label
+            class="text-[13px] font-semibold text-slate-500 dark:text-slate-400"
+            >Role</label
+          >
+          <span
+            v-if="!isSuperAdmin"
+            class="text-[11px] text-amber-500/90 flex items-center gap-1 font-medium"
+          >
+            <span class="material-symbols-outlined text-[13px]">lock</span>
+            Admin role creation is restricted to Super Admins
+          </span>
+        </div>
         <RegalSelect
           v-model="form.role"
-          :options="[
-            { value: 'STUDENT', label: 'STUDENT' },
-            { value: 'ADMIN', label: 'ADMIN' },
-          ]"
+          :options="roleOptions"
           placeholder="Select role…"
+          :disabled="!isSuperAdmin && !isEdit"
         />
       </div>
 
-      <!-- Current Admin Password Confirmation (Required when creating an ADMIN user) -->
+      <!-- Super Admin Password Confirmation (Required when creating an ADMIN user) -->
       <div
-        v-if="!isEdit && form.role === 'ADMIN'"
+        v-if="!isEdit && (form.role === 'ADMIN' || form.role === 'SUPER_ADMIN')"
         class="flex flex-col gap-2.5 p-4 rounded-xl bg-purple-500/10 border border-purple-500/30 animate-in fade-in duration-200"
       >
         <div class="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold text-xs">
           <span class="material-symbols-outlined text-[18px]">verified_user</span>
-          <span>Administrator Authorization Required</span>
+          <span>Super Administrator Authorization Required</span>
         </div>
         <p class="text-[11px] text-slate-600 dark:text-slate-300">
-          Creating a new Administrator requires confirming <strong>YOUR</strong> current administrator password.
+          Creating a new Administrator requires confirming <strong>YOUR</strong> Super Administrator password.
         </p>
         <div class="flex flex-col gap-1.5">
           <label class="text-[13px] font-semibold text-slate-800 dark:text-slate-200">
-            Your Current Admin Password <span class="text-primary ml-0.5">*</span>
+            Your Super Admin Password <span class="text-primary ml-0.5">*</span>
           </label>
           <input
             v-model="form.currentAdminPassword"
             type="password"
             class="w-full bg-slate-50 dark:bg-background-dark border border-purple-400/50 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 outline-none transition-colors font-medium"
-            placeholder="Enter your current password"
+            placeholder="Enter your Super Admin password"
             required
           />
         </div>

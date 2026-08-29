@@ -519,7 +519,7 @@ onUnmounted(() => {
               </router-link>
 
               <router-link
-                v-if="authStore.user?.role === 'ADMIN'"
+                v-if="authStore.user?.role === 'ADMIN' || authStore.user?.role === 'SUPER_ADMIN'"
                 to="/admin/dashboard"
                 class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
                 @click="userMenuOpen = false"

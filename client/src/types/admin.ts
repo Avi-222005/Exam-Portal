@@ -76,7 +76,7 @@ export interface AdminUser {
   email: string;
   countryCode?: string;
   phoneNumber?: string;
-  role: 'STUDENT' | 'ADMIN';
+  role: 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN';
   metadata?: Record<string, string | number | boolean>;
   createdAt: string;
 }
@@ -276,7 +276,7 @@ export interface CreateUserPayload {
   password: string;
   countryCode?: string;
   phoneNumber?: string;
-  role?: 'STUDENT' | 'ADMIN';
+  role?: 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN';
   currentAdminPassword?: string;
 }
 

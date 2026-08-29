@@ -90,13 +90,13 @@ export class UsersService {
 
   async count(excludeAdmins: boolean = false): Promise<number> {
     return this.userRepo.count({
-      where: excludeAdmins ? { role: Not(UserRole.ADMIN) } : undefined,
+      where: excludeAdmins ? { role: UserRole.STUDENT } : undefined,
     });
   }
 
   async countAdmins(): Promise<number> {
     return this.userRepo.count({
-      where: { role: UserRole.ADMIN },
+      where: [{ role: UserRole.ADMIN }, { role: UserRole.SUPER_ADMIN }],
     });
   }
 
@@ -140,23 +140,27 @@ export class UsersService {
   }
 
   async adminCreate(dto: CreateUserDto, requestingAdminId?: number): Promise<User> {
-    if (dto.role === UserRole.ADMIN) {
+    if (dto.role === UserRole.ADMIN || dto.role === UserRole.SUPER_ADMIN) {
       if (!requestingAdminId) {
         throw new ForbiddenException(
-          'Admin accounts can only be created by an authenticated administrator.',
+          'Administrator accounts can only be created by an authenticated Super Administrator.',
+        );
+      }
+      const requestingAdmin = await this.findByIdWithPassword(requestingAdminId);
+      if (!requestingAdmin || requestingAdmin.role !== UserRole.SUPER_ADMIN) {
+        throw new ForbiddenException(
+          'Permission denied: Only Super Administrators have permission to create or elevate administrator accounts.',
         );
       }
       if (!dto.currentAdminPassword) {
         throw new BadRequestException(
-          'Your current administrator password is required to authorize creating an admin account.',
+          'Your Super Administrator password is required to authorize creating an admin account.',
         );
       }
-      const requestingAdmin = await this.findByIdWithPassword(requestingAdminId);
       if (
-        !requestingAdmin ||
         !(await bcrypt.compare(dto.currentAdminPassword, requestingAdmin.password))
       ) {
-        throw new UnauthorizedException('Invalid current administrator password.');
+        throw new UnauthorizedException('Invalid Super Administrator password.');
       }
     }
 

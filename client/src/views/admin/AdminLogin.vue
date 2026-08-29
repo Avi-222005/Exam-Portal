@@ -26,7 +26,10 @@ const error = ref('');
 const loading = ref(false);
 
 onMounted(async () => {
-  if (authStore.isAuthenticated && authStore.user?.role === 'ADMIN') {
+  if (
+    authStore.isAuthenticated &&
+    (authStore.user?.role === 'ADMIN' || authStore.user?.role === 'SUPER_ADMIN')
+  ) {
     void router.replace({ name: 'admin-dashboard' });
     return;
   }
@@ -74,7 +77,10 @@ async function submitLogin() {
       authStore.setUser(me.data);
     }
 
-    if (authStore.user?.role !== 'ADMIN') {
+    if (
+      authStore.user?.role !== 'ADMIN' &&
+      authStore.user?.role !== 'SUPER_ADMIN'
+    ) {
       authStore.logout();
       error.value = 'Access denied. Admin account required.';
       return;
