@@ -49,14 +49,13 @@ const {
   computed(() => examStore.activeExam?.maxViolations),
 );
 
-// Auto-submit when maximum violations are reached
+// Lockout safety trigger (if not manually submitted within 15 seconds)
 watch(isLockedOut, (locked) => {
-  if (locked && !isSubmittingTest.value) {
+  if (locked) {
     toastStore.add(
       'error',
-      'Assessment terminated due to exceeding maximum allowed proctoring violations.',
+      'Maximum proctoring violations exceeded. Assessment session locked.',
     );
-    void handleConfirmSubmitTest();
   }
 });
 
@@ -537,7 +536,9 @@ async function handleConfirmSubmitTest() {
       :is-side-panel-open="isSidePanelOpen"
       :is-locked-out="isLockedOut"
       :max-violations="maxViolations"
+      :is-submitting-lockout="isSubmittingTest"
       @enter-fullscreen="enterFullscreen"
+      @submit-lockout="handleConfirmSubmitTest"
     />
   </div>
 </template>
