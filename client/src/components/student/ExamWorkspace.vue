@@ -8,6 +8,7 @@ import CodingEditorView from './CodingEditorView.vue';
 import McqProblemView from './McqProblemView.vue';
 import SubmitTestModal from './SubmitTestModal.vue';
 import FullscreenGuardModal from './FullscreenGuardModal.vue';
+import ExamSectionDetailsModal from './ExamSectionDetailsModal.vue';
 import { useProblemsStore } from '../../stores/problems';
 import { useEditorStore } from '../../stores/editor';
 import { useExamStore } from '../../stores/exam';
@@ -38,6 +39,38 @@ const {
   exitFullscreen,
   clearSession,
 } = useFullscreenGuard(computed(() => examStore.activeExam?.id));
+
+// Section & Marks Metrics for Overview Modal
+const mcqProblems = computed(() =>
+  problemsStore.problems.filter((p) => p.questionType === 'mcq'),
+);
+const codingProblems = computed(() =>
+  problemsStore.problems.filter((p) => p.questionType !== 'mcq'),
+);
+
+const mcqCount = computed(() => mcqProblems.value.length);
+const mcqMarksEach = computed(() => {
+  if (mcqProblems.value.length === 0) return 0;
+  return mcqProblems.value[0]?.maxScore ?? 1;
+});
+
+const codingCount = computed(() => codingProblems.value.length);
+const codingMarksEach = computed(() => {
+  if (codingProblems.value.length === 0) return 0;
+  return codingProblems.value[0]?.maxScore ?? 10;
+});
+
+const totalQuestions = computed(() => problemsStore.problems.length);
+const totalMarks = computed(() =>
+  problemsStore.problems.reduce((sum, p) => sum + (p.maxScore ?? 0), 0),
+);
+
+// Pre-test section overview modal
+const showSectionDetailsModal = ref(true);
+
+function handleUnderstoodSectionDetails() {
+  showSectionDetailsModal.value = false;
+}
 
 // Timer
 const { remaining, isWarning, isCritical, start: startTimer } = useTimer();
@@ -437,9 +470,23 @@ async function handleConfirmSubmitTest() {
       @confirm="handleConfirmSubmitTest"
     />
 
+    <!-- ── Test Section Details Modal ──────────────────────────────── -->
+    <ExamSectionDetailsModal
+      v-if="showSectionDetailsModal"
+      :exam-title="examStore.activeExam?.title || 'Coding Assessment'"
+      :duration-minutes="examStore.activeExam?.durationMinutes || 60"
+      :mcq-count="mcqCount"
+      :mcq-marks-each="mcqMarksEach"
+      :coding-count="codingCount"
+      :coding-marks-each="codingMarksEach"
+      :total-questions="totalQuestions"
+      :total-marks="totalMarks"
+      @understood="handleUnderstoodSectionDetails"
+    />
+
     <!-- ── Fullscreen Proctoring Guard Modal ───────────────────────── -->
     <FullscreenGuardModal
-      v-if="!isStarted || showGuardModal || !isFullscreen"
+      v-else-if="!isStarted || showGuardModal || !isFullscreen"
       :is-initial-prompt="!isStarted"
       :violation-count="violationCount"
       @enter-fullscreen="enterFullscreen"
