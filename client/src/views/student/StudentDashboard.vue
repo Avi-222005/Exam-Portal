@@ -8,6 +8,7 @@ import { useAuthStore } from '../../stores/auth';
 import { useExamStore } from '../../stores/exam';
 import { useTheme } from '../../composables/useTheme';
 import { brand } from '../../config/brand';
+import UserProfileDropdown from '../../components/layout/UserProfileDropdown.vue';
 import type { Exam, ExamEnrollment } from '../../types';
 import api, { startExam } from '../../services/api';
 
@@ -138,11 +139,6 @@ const activeTabLabel = computed(() => {
   const found = sidebarTabs.find((t) => t.id === activeTab.value);
   return found ? found.label : 'Student Dashboard';
 });
-
-function handleLogout() {
-  authStore.logout();
-  void router.push('/login');
-}
 
 // ── Computed ───────────────────────────────────────────────────────────────
 const enrolledExamIds = computed(() =>
@@ -689,17 +685,8 @@ async function runDiagnostics() {
         </span>
       </div>
 
-      <!-- Right: Home + Theme Toggle + User Info + Logout -->
-      <div class="flex items-center gap-2.5 min-w-[180px] justify-end">
-        <router-link
-          to="/"
-          class="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary bg-slate-100/80 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] rounded-lg transition-colors no-underline"
-          title="Return to Home"
-        >
-          <span class="material-symbols-outlined text-[16px]">home</span>
-          <span class="hidden md:inline">Home</span>
-        </router-link>
-
+      <!-- Right: Theme Toggle + Profile dropdown -->
+      <div class="flex items-center gap-2 min-w-[180px] justify-end">
         <button
           type="button"
           class="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
@@ -711,17 +698,10 @@ async function runDiagnostics() {
           </span>
         </button>
 
-        <span class="text-xs text-slate-500 max-w-[140px] truncate hidden md:inline font-mono">
-          {{ authStore.user?.email }}
-        </span>
-
-        <button
-          type="button"
-          class="px-2.5 py-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 border border-slate-200 dark:border-white/[0.08] hover:border-rose-300 dark:hover:border-rose-800 rounded-lg transition-colors cursor-pointer"
-          @click="handleLogout"
-        >
-          Logout
-        </button>
+        <!-- Profile dropdown (same style as home page) -->
+        <div class="pl-1 border-l border-slate-200 dark:border-white/[0.08]">
+          <UserProfileDropdown dropdown-id="student-dashboard-profile-dropdown" />
+        </div>
       </div>
     </header>
 

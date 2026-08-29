@@ -1,16 +1,14 @@
 <script setup lang="ts">
 // PRESERVED: all imports, route/router/authStore usage
 import { computed, ref, onMounted, watch } from 'vue';
-import { useRoute, useRouter, RouterLink } from 'vue-router';
-import { useAuthStore } from '../../stores/auth';
+import { useRoute, RouterLink } from 'vue-router';
 import { useTheme } from '../../composables/useTheme';
 import { listExams } from '../../services/adminApi';
 import type { ExamWithProblems } from '../../types/admin';
 import { brand } from '../../config/brand';
+import UserProfileDropdown from '../../components/layout/UserProfileDropdown.vue';
 
 const route = useRoute();
-const router = useRouter();
-const authStore = useAuthStore();
 const { theme, toggleTheme } = useTheme();
 const mobileNavOpen = ref(false);
 
@@ -111,11 +109,8 @@ const activeLabel = computed(() => {
   return 'Admin';
 });
 
-function logout() {
-  authStore.logout();
-  void router.replace({ name: 'admin-login' });
-}
 </script>
+
 
 <template>
   <div
@@ -155,38 +150,20 @@ function logout() {
         >
       </div>
 
-      <!-- Right: Home + Theme toggle + User + Logout -->
-      <div class="flex items-center gap-2.5 min-w-[160px] justify-end">
-        <RouterLink
-          to="/"
-          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100/80 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] rounded-lg transition-colors no-underline"
-          title="Return to Home"
-        >
-          <span class="material-symbols-outlined text-[16px]">home</span>
-          <span>Home</span>
-        </RouterLink>
-
+      <!-- Right: Theme toggle + Profile dropdown -->
+      <div class="flex items-center gap-2 min-w-[160px] justify-end">
         <button
           class="flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-          :title="
-            theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
-          "
+          :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
           @click="toggleTheme"
         >
-          <span class="material-symbols-outlined text-[18px]">{{
-            theme === 'dark' ? 'light_mode' : 'dark_mode'
-          }}</span>
+          <span class="material-symbols-outlined text-[18px]">{{ theme === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
         </button>
-        <span
-          class="text-xs text-slate-500 max-w-[160px] truncate hidden sm:inline"
-          >{{ authStore.user?.email }}</span
-        >
-        <button
-          class="px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/[0.08] hover:border-slate-400 dark:hover:border-white/[0.15] rounded-lg transition-colors cursor-pointer"
-          @click="logout"
-        >
-          Logout
-        </button>
+
+        <!-- Profile dropdown (same style as home page) -->
+        <div class="pl-1 border-l border-slate-200 dark:border-white/[0.08]">
+          <UserProfileDropdown dropdown-id="admin-layout-profile-dropdown" />
+        </div>
       </div>
     </header>
 
