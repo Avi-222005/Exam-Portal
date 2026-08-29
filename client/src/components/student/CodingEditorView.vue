@@ -4,6 +4,7 @@ import { useEditorStore } from '../../stores/editor';
 import { useExamStore } from '../../stores/exam';
 import { useRunSubmitStore } from '../../stores/runSubmit';
 import { useUiStore } from '../../stores/ui';
+import { useToastStore } from '../../stores/toast';
 import { useMonaco } from '../../composables/useMonaco';
 import type { Problem } from '../../types';
 
@@ -19,6 +20,7 @@ const editorStore = useEditorStore();
 const examStore = useExamStore();
 const runSubmit = useRunSubmitStore();
 const uiStore = useUiStore();
+const toastStore = useToastStore();
 const containerRef = ref<HTMLElement | null>(null);
 
 // Monaco Editor setup
@@ -67,12 +69,26 @@ const customInputText = ref('');
 // Test Execution
 async function handleCompileAndRun() {
   if (runSubmit.running || runSubmit.submitting) return;
+  if (runSubmit.alreadySolved && !showCustomInput.value) {
+    toastStore.add(
+      'info',
+      'Final code submission has been done and no more submissions will be taken.',
+    );
+    return;
+  }
   const customStdin = showCustomInput.value ? customInputText.value : undefined;
   await runSubmit.run(customStdin);
 }
 
 async function handleSubmitCode() {
   if (runSubmit.running || runSubmit.submitting) return;
+  if (runSubmit.alreadySolved) {
+    toastStore.add(
+      'info',
+      'Final code submission has been done and no more submissions will be taken.',
+    );
+    return;
+  }
   await runSubmit.submit();
 }
 
@@ -230,9 +246,18 @@ const testcaseResults = computed(() => {
 
       <!-- Test Results Panel (Screenshot 4) -->
       <div
-        v-if="hasResults || runSubmit.running || runSubmit.submitting"
+        v-if="hasResults || runSubmit.running || runSubmit.submitting || runSubmit.alreadySolved"
         class="p-5 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#090d16] flex flex-col gap-4 text-xs"
       >
+        <!-- Already solved / Final code submission banner -->
+        <div
+          v-if="runSubmit.alreadySolved"
+          class="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-md text-emerald-800 dark:text-emerald-300 font-medium"
+        >
+          <span class="material-symbols-outlined text-[18px] text-emerald-600 dark:text-emerald-400">task_alt</span>
+          <span>Final code submission has been done and no more submissions will be taken.</span>
+        </div>
+
         <!-- Running Loader -->
         <div
           v-if="runSubmit.running || runSubmit.submitting"

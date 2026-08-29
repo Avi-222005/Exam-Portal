@@ -61,6 +61,7 @@ export const useRunSubmitStore = defineStore('runSubmit', () => {
         ?.response?.data?.code;
       if (code === 'ALREADY_SOLVED') {
         useExamStore().markProblemSolved(editorStore.activeProblemId);
+        useToastStore().add('info', 'Final code submission has been done and no more submissions will be taken.');
       } else {
         useToastStore().add('error', extractMessage(err));
       }
@@ -94,6 +95,7 @@ export const useRunSubmitStore = defineStore('runSubmit', () => {
         ?.response?.data?.code;
       if (code === 'ALREADY_SOLVED') {
         useExamStore().markProblemSolved(editorStore.activeProblemId);
+        useToastStore().add('info', 'Final code submission has been done and no more submissions will be taken.');
       } else {
         useToastStore().add('error', message);
       }

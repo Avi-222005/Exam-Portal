@@ -61,7 +61,7 @@ export class SubmissionsService {
     if (accepted) {
       throw new BadRequestException({
         message:
-          'You have already solved this problem. No further submissions are allowed.',
+          'Final code submission has been done and no more submissions will be taken.',
         code: 'ALREADY_SOLVED',
       });
     }
@@ -340,7 +340,8 @@ export class SubmissionsService {
       });
       if (accepted) {
         throw new BadRequestException({
-          message: 'You have already solved this problem.',
+          message:
+            'Final code submission has been done and no more submissions will be taken.',
           code: 'ALREADY_SOLVED',
         });
       }
