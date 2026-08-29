@@ -89,15 +89,15 @@ export class Judge0Service {
   }
 
   // Language IDs that run on the JVM (Java, Kotlin).
-  // The JVM reserves ~1 GB metaspace on startup, so per-process memory
-  // limits below that threshold kill the process before it even initialises.
+  // The JVM reserves ~1 GB of virtual address space for metaspace on startup,
+  // so the per-process memory limit must be high enough to accommodate it.
   private static readonly JVM_LANGUAGE_IDS = new Set([
     62, 91,  // Java (OpenJDK 13, Java 17)
     78,      // Kotlin
   ]);
 
-  // Minimum memory the JVM needs to boot (512 MB in KB)
-  private static readonly JVM_MIN_MEMORY_KB = 524288;
+  // 1.5 GB in KB — covers the JVM's 1 GB metaspace reservation + heap + stack
+  private static readonly JVM_MIN_MEMORY_KB = 1572864;
 
   async runBatch(
     code: string,
@@ -108,8 +108,8 @@ export class Judge0Service {
   ): Promise<JudgeResult[]> {
     const isJvm = Judge0Service.JVM_LANGUAGE_IDS.has(languageId);
 
-    // JVM languages need a higher memory ceiling and cannot use per-process
-    // memory limits because the JVM's metaspace reservation exceeds them.
+    // JVM languages need a much higher memory ceiling because the JVM
+    // reserves ~1 GB of virtual address space for metaspace on startup.
     const effectiveMemoryKb = isJvm
       ? Math.max(memoryLimitKb, Judge0Service.JVM_MIN_MEMORY_KB)
       : memoryLimitKb;
@@ -124,7 +124,7 @@ export class Judge0Service {
       cpu_time_limit: timeLimitSec,
       memory_limit: effectiveMemoryKb,
       enable_per_process_and_thread_time_limit: true,
-      enable_per_process_and_thread_memory_limit: !isJvm,
+      enable_per_process_and_thread_memory_limit: true,
     }));
 
     const batchSize = SECRETS.MAX_SUBMISSION_BATCH_SIZE;
