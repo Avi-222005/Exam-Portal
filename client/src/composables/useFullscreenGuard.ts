@@ -21,7 +21,6 @@ export function useFullscreenGuard(
     return examIdSource.value ?? 'current';
   };
 
-  const getStartedKey = () => `cv_u_${getUserId()}_exam_${getExamId()}_fs_started`;
   const getViolationsKey = () => `cv_u_${getUserId()}_exam_${getExamId()}_fs_violations`;
 
   const isFullscreen = ref(Boolean(document.fullscreenElement));
@@ -30,33 +29,14 @@ export function useFullscreenGuard(
   const showGuardModal = ref(false);
   const currentViolationReason = ref<ViolationType | null>(null);
 
-  let heartbeatInterval: number | null = null;
-  let lastViolationTime = 0;
+  // Tracks if the user is currently in an active paused/violation modal state
+  // to prevent duplicate or timer-like repeating increments
+  const isCurrentlyViolating = ref(false);
 
   function loadPersistedState() {
-    const legacyKey = `cv_exam_${getExamId()}_fs_violations`;
-    if (localStorage.getItem(legacyKey)) {
-      localStorage.removeItem(legacyKey);
-      localStorage.removeItem(`cv_exam_${getExamId()}_fs_started`);
-    }
-
-    const started = localStorage.getItem(getStartedKey()) === 'true';
     const violations = parseInt(localStorage.getItem(getViolationsKey()) || '0', 10);
-    isStarted.value = started;
     violationCount.value = violations;
-
-    const active = Boolean(document.fullscreenElement);
-    isFullscreen.value = active;
-
-    if (started) {
-      if (!active || !document.hasFocus()) {
-        showGuardModal.value = true;
-      } else {
-        showGuardModal.value = false;
-      }
-    } else {
-      showGuardModal.value = true;
-    }
+    isFullscreen.value = Boolean(document.fullscreenElement);
   }
 
   function logViolationToBackend(reason: ViolationType, count: number) {
@@ -74,19 +54,18 @@ export function useFullscreenGuard(
     }
   }
 
-  function recordViolation(reason: ViolationType) {
-    const now = Date.now();
-    // Throttle duplicate violations within 800ms
-    if (now - lastViolationTime < 800) return;
-    lastViolationTime = now;
+  function triggerViolation(reason: ViolationType) {
+    if (!isStarted.value) return;
+    if (isCurrentlyViolating.value) return; // Already paused; do not multi-count
 
+    isCurrentlyViolating.value = true;
     currentViolationReason.value = reason;
+    showGuardModal.value = true;
     violationCount.value++;
     localStorage.setItem(getViolationsKey(), String(violationCount.value));
     logViolationToBackend(reason, violationCount.value);
-  }
 
-  function sanitizeClipboard() {
+    // Sanitize clipboard on violation
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         void navigator.clipboard.writeText('');
@@ -96,59 +75,54 @@ export function useFullscreenGuard(
     }
   }
 
-  function checkFullscreenAndFocus() {
+  function checkFullscreenState() {
     const activeFs = Boolean(document.fullscreenElement);
     isFullscreen.value = activeFs;
 
     if (!isStarted.value) return;
 
-    const hasFocus = document.hasFocus();
+    if (!activeFs) {
+      triggerViolation('fullscreen_exit');
+      return;
+    }
+
+    // Side panel detection: if browser side-panel is opened, viewport width shrinks significantly (>200px)
     const isSidePanelOpen =
       screen.width > 600 &&
-      (screen.width - window.innerWidth > 75 || screen.height - window.innerHeight > 75);
+      (screen.width - window.innerWidth > 200 || window.outerWidth - window.innerWidth > 200);
 
-    if (!activeFs) {
-      showGuardModal.value = true;
-      recordViolation('fullscreen_exit');
-    } else if (!hasFocus) {
-      showGuardModal.value = true;
-      recordViolation('blur_focus_lost');
-      sanitizeClipboard();
-    } else if (isSidePanelOpen) {
-      showGuardModal.value = true;
-      recordViolation('side_panel_detected');
-    } else {
+    if (isSidePanelOpen) {
+      triggerViolation('side_panel_detected');
+      return;
+    }
+
+    if (!document.hasFocus()) {
+      triggerViolation('blur_focus_lost');
+      return;
+    }
+
+    // If all checks pass and we were not violating, ensure modal is closed
+    if (!isCurrentlyViolating.value) {
       showGuardModal.value = false;
       currentViolationReason.value = null;
     }
   }
 
   function handleBlur() {
-    if (isStarted.value) {
-      showGuardModal.value = true;
-      recordViolation('blur_focus_lost');
-      sanitizeClipboard();
-    }
+    if (!isStarted.value) return;
+    triggerViolation('blur_focus_lost');
   }
 
-  function handleFocus() {
-    if (isStarted.value) {
-      checkFullscreenAndFocus();
+  function handleVisibilityChange() {
+    if (!isStarted.value) return;
+    if (document.visibilityState === 'hidden') {
+      triggerViolation('tab_switched');
     }
   }
 
   function handleResize() {
-    if (isStarted.value) {
-      checkFullscreenAndFocus();
-    }
-  }
-
-  function handleVisibilityChange() {
-    if (isStarted.value && document.visibilityState === 'hidden') {
-      recordViolation('tab_switched');
-      showGuardModal.value = true;
-      sanitizeClipboard();
-    }
+    if (!isStarted.value) return;
+    checkFullscreenState();
   }
 
   function handleContextMenu(e: MouseEvent) {
@@ -275,14 +249,14 @@ export function useFullscreenGuard(
         await document.documentElement.requestFullscreen();
       }
       isStarted.value = true;
-      localStorage.setItem(getStartedKey(), 'true');
       isFullscreen.value = true;
+      isCurrentlyViolating.value = false;
       showGuardModal.value = false;
       currentViolationReason.value = null;
     } catch (err) {
       console.warn('[fullscreen] Could not enter fullscreen mode', err);
       isStarted.value = true;
-      localStorage.setItem(getStartedKey(), 'true');
+      isCurrentlyViolating.value = false;
       showGuardModal.value = false;
       currentViolationReason.value = null;
     }
@@ -300,9 +274,9 @@ export function useFullscreenGuard(
   }
 
   function clearSession() {
-    localStorage.removeItem(getStartedKey());
     localStorage.removeItem(getViolationsKey());
     isStarted.value = false;
+    isCurrentlyViolating.value = false;
     violationCount.value = 0;
     currentViolationReason.value = null;
   }
@@ -316,7 +290,7 @@ export function useFullscreenGuard(
 
   onMounted(() => {
     loadPersistedState();
-    document.addEventListener('fullscreenchange', checkFullscreenAndFocus);
+    document.addEventListener('fullscreenchange', checkFullscreenState);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('copy', handleCopyOrCut);
@@ -325,18 +299,11 @@ export function useFullscreenGuard(
     document.addEventListener('dragstart', handleDragStart);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('blur', handleBlur);
-    window.addEventListener('focus', handleFocus);
     window.addEventListener('resize', handleResize);
-
-    // Active heartbeat to catch side-panels and floating overlays
-    heartbeatInterval = window.setInterval(() => {
-      checkFullscreenAndFocus();
-    }, 400);
   });
 
   onUnmounted(() => {
-    if (heartbeatInterval) clearInterval(heartbeatInterval);
-    document.removeEventListener('fullscreenchange', checkFullscreenAndFocus);
+    document.removeEventListener('fullscreenchange', checkFullscreenState);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     document.removeEventListener('contextmenu', handleContextMenu);
     document.removeEventListener('copy', handleCopyOrCut);
@@ -345,7 +312,6 @@ export function useFullscreenGuard(
     document.removeEventListener('dragstart', handleDragStart);
     window.removeEventListener('keydown', handleKeyDown);
     window.removeEventListener('blur', handleBlur);
-    window.removeEventListener('focus', handleFocus);
     window.removeEventListener('resize', handleResize);
   });
 
