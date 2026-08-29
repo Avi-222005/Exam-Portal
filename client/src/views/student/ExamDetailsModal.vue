@@ -19,6 +19,7 @@ const props = defineProps<{
   isOpen: boolean;
   isEnrolled: boolean;
   isLive: boolean;
+  isStarted?: boolean;
   isCompleted?: boolean;
 }>();
 
@@ -153,8 +154,8 @@ function formatDuration(minutes: number): string {
               class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
               @click="emit('enter', exam)"
             >
-              <span class="material-symbols-outlined text-[16px]">rocket_launch</span>
-              Enter Workspace
+              <span class="material-symbols-outlined text-[16px]">{{ isStarted ? 'play_circle' : 'play_arrow' }}</span>
+              {{ isStarted ? 'Resume Test' : 'Start Test' }}
             </button>
             <button
               v-else-if="!isEnrolled"

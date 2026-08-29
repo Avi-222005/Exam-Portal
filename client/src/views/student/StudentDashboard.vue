@@ -9,7 +9,7 @@ import { useExamStore } from '../../stores/exam';
 import { useTheme } from '../../composables/useTheme';
 import { brand } from '../../config/brand';
 import type { Exam, ExamEnrollment } from '../../types';
-import api from '../../services/api';
+import api, { startExam } from '../../services/api';
 
 interface ExamItem {
   id: number;
@@ -153,9 +153,27 @@ const completedExamIds = computed(() =>
   new Set(myEnrollments.value.filter((e) => e.isCompleted).map((e) => e.examId)),
 );
 
+const startedExamIds = computed(() =>
+  new Set(
+    myEnrollments.value
+      .filter((e) => !!e.startedAt)
+      .map((e) => e.examId),
+  ),
+);
+
 function isExamCompleted(exam?: ExamItem | { id: number } | null): boolean {
   if (!exam) return false;
   return completedExamIds.value.has(exam.id);
+}
+
+function isExamStarted(exam?: ExamItem | { id: number } | null): boolean {
+  if (!exam) return false;
+  if (startedExamIds.value.has(exam.id)) return true;
+  try {
+    return localStorage.getItem(`exam_started_${exam.id}`) === 'true';
+  } catch {
+    return false;
+  }
 }
 
 const solvedCount = computed(() => {
@@ -480,6 +498,12 @@ async function enrollInExam(exam: ExamItem) {
 }
 
 function enterExamWorkspace(exam: ExamItem) {
+  try {
+    localStorage.setItem(`exam_started_${exam.id}`, 'true');
+  } catch {
+    // ignore
+  }
+  void startExam(exam.id).catch(() => {});
   examStore.selectExam(exam as unknown as Exam);
   void router.push({
     name: 'workspace',
@@ -1058,15 +1082,26 @@ async function runDiagnostics() {
                   Test Finished
                 </button>
 
-                <!-- If Enrolled & Live -->
+                <!-- If Enrolled & Live & Resumable -->
+                <button
+                  v-else-if="isExamLive(exam) && enrolledExamIds.has(exam.id) && isExamStarted(exam)"
+                  type="button"
+                  class="btn-enter flex-1"
+                  @click="enterExamWorkspace(exam)"
+                >
+                  <span class="material-symbols-outlined text-[16px]">play_circle</span>
+                  Resume Test
+                </button>
+
+                <!-- If Enrolled & Live & Not Started -->
                 <button
                   v-else-if="isExamLive(exam) && enrolledExamIds.has(exam.id)"
                   type="button"
                   class="btn-enter flex-1"
                   @click="enterExamWorkspace(exam)"
                 >
-                  <span class="material-symbols-outlined text-[16px]">rocket_launch</span>
-                  Enter Workspace
+                  <span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                  Start Test
                 </button>
 
                 <!-- If Enrolled & Upcoming -->
@@ -1330,8 +1365,8 @@ async function runDiagnostics() {
               class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
               @click="enterExamWorkspace(leaderboardExam as any)"
             >
-              <span class="material-symbols-outlined text-[15px]">rocket_launch</span>
-              Enter Workspace
+              <span class="material-symbols-outlined text-[15px]">{{ isExamStarted(leaderboardExam as any) ? 'play_circle' : 'play_arrow' }}</span>
+              {{ isExamStarted(leaderboardExam as any) ? 'Resume Test' : 'Start Test' }}
             </button>
             <span
               v-else-if="leaderboardExam && completedExamIds.has(leaderboardExam.id)"
@@ -1572,6 +1607,7 @@ async function runDiagnostics() {
       :is-open="showExamModal"
       :is-enrolled="selectedExamForModal ? enrolledExamIds.has(selectedExamForModal.id) : false"
       :is-live="selectedExamForModal ? isExamLive(selectedExamForModal) : false"
+      :is-started="selectedExamForModal ? isExamStarted(selectedExamForModal) : false"
       :is-completed="selectedExamForModal ? isExamCompleted(selectedExamForModal) : false"
       @close="showExamModal = false"
       @enroll="(ex) => { showExamModal = false; triggerEnroll(ex as ExamItem); }"

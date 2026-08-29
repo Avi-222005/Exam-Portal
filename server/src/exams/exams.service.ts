@@ -112,9 +112,36 @@ export class ExamsService {
       solvedProblemIds: solvedCodingIds,
       mcqSectionSubmitted,
       mcqProblemCount: mcqProblemIds.length,
+      isStarted: !!enrollment?.startedAt,
+      startedAt: enrollment?.startedAt ?? null,
       isCompleted: enrollment?.isCompleted ?? false,
       completedAt: enrollment?.completedAt ?? null,
     };
+  }
+
+  async startExam(
+    userId: number,
+    examId: number,
+  ): Promise<{ success: boolean; startedAt: Date }> {
+    const exam = await this.getById(examId);
+
+    let enrollment = await this.enrollmentRepo.findOne({
+      where: { userId, examId: exam.id },
+    });
+
+    const now = new Date();
+    if (!enrollment) {
+      enrollment = this.enrollmentRepo.create({
+        userId,
+        examId: exam.id,
+        startedAt: now,
+      });
+    } else if (!enrollment.startedAt) {
+      enrollment.startedAt = now;
+    }
+
+    await this.enrollmentRepo.save(enrollment);
+    return { success: true, startedAt: enrollment.startedAt };
   }
 
   async finishExam(

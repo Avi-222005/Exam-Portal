@@ -95,6 +95,13 @@ export async function submitMcqSection(payload: {
   return data;
 }
 
+export async function startExam(examId: number): Promise<{ success: boolean; startedAt: string }> {
+  const { data } = await api.post<{ success: boolean; startedAt: string }>(
+    `/exams/${examId}/start`,
+  );
+  return data;
+}
+
 export async function submitExam(examId: number): Promise<{ success: boolean; completedAt: string }> {
   const { data } = await api.post<{ success: boolean; completedAt: string }>(
     `/exams/${examId}/submit`,

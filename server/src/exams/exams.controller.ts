@@ -173,6 +173,28 @@ export class ExamsController {
     return this.examsService.getMyProgress(user.id, examId);
   }
 
+  @Post(':id/start')
+  @Auth()
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mark exam as started for the current candidate' })
+  @ApiResponse({
+    status: 200,
+    description: 'Exam marked as started',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        startedAt: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  async startExam(
+    @GetUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.examsService.startExam(user.id, id);
+  }
+
   @Post(':id/submit')
   @Auth()
   @ApiBearerAuth()

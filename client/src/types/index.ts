@@ -25,6 +25,7 @@ export interface ExamEnrollment {
   userId: number;
   examId: number;
   enrolledAt: string;
+  startedAt?: string | null;
   isCompleted?: boolean;
   completedAt?: string | null;
   exam?: Exam;
@@ -122,6 +123,8 @@ export interface MyProgress {
   solvedProblemIds: number[];
   mcqSectionSubmitted?: boolean;
   mcqProblemCount?: number;
+  isStarted?: boolean;
+  startedAt?: string | null;
   isCompleted?: boolean;
   completedAt?: string | null;
 }

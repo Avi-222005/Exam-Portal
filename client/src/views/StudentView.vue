@@ -21,7 +21,7 @@ import { useAuthStore } from '../stores/auth';
 import { useAutosave } from '../composables/useAutosave';
 import { useTimer } from '../composables/useTimer';
 import { useCelebration } from '../composables/useCelebration';
-import api from '../services/api';
+import api, { startExam } from '../services/api';
 import type { Problem } from '../types';
 
 const route = useRoute();
@@ -160,6 +160,14 @@ onMounted(async () => {
 
   // Auto-launch the guided tour once per exam
   const currentExamId = examStore.activeExam?.id;
+  if (currentExamId) {
+    try {
+      localStorage.setItem(`exam_started_${currentExamId}`, 'true');
+    } catch {
+      // ignore
+    }
+    void startExam(currentExamId).catch(() => {});
+  }
   const tourKey = `tourShown:${currentExamId}`;
   if (currentExamId && !localStorage.getItem(tourKey)) {
     await nextTick();
