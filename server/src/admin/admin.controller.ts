@@ -9,12 +9,14 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { LeaderboardService } from './leaderboard.service';
 import { Auth } from '../common/decorators/auth.decorator';
 import { AuthType } from '../common/enums/auth-type.enum';
+import { UserRole } from '../common/enums/user-role.enum';
 import { AdminGuard } from './guards/admin.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { User } from '../entities/user.entity';
