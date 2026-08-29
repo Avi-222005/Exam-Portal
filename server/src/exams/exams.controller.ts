@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, ParseIntPipe } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -160,6 +160,8 @@ export class ExamsController {
         totalProblems: { type: 'number' },
         solvedProblems: { type: 'number' },
         allSolved: { type: 'boolean' },
+        isCompleted: { type: 'boolean' },
+        completedAt: { type: 'string', format: 'date-time', nullable: true },
       },
     },
   })
@@ -169,5 +171,27 @@ export class ExamsController {
     @Param('examId', ParseIntPipe) examId: number,
   ) {
     return this.examsService.getMyProgress(user.id, examId);
+  }
+
+  @Post(':id/submit')
+  @Auth()
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Submit and finalize an entire exam for the current student' })
+  @ApiResponse({
+    status: 200,
+    description: 'Exam finalized successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        completedAt: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  async submitExam(
+    @GetUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.examsService.finishExam(user.id, id);
   }
 }

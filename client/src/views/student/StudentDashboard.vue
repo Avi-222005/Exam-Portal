@@ -149,6 +149,15 @@ const enrolledExamIds = computed(() =>
   new Set(myEnrollments.value.map((e) => e.examId)),
 );
 
+const completedExamIds = computed(() =>
+  new Set(myEnrollments.value.filter((e) => e.isCompleted).map((e) => e.examId)),
+);
+
+function isExamCompleted(exam?: ExamItem | { id: number } | null): boolean {
+  if (!exam) return false;
+  return completedExamIds.value.has(exam.id);
+}
+
 const solvedCount = computed(() => {
   const solvedProblemIds = new Set<number>();
   for (const s of submissions.value) {
@@ -993,7 +1002,14 @@ async function runDiagnostics() {
                   </span>
                 </div>
 
-                <span v-if="enrolledExamIds.has(exam.id)" class="enrolled-badge">
+                <span
+                  v-if="isExamCompleted(exam)"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-[12px]">task_alt</span>
+                  Test Finished
+                </span>
+                <span v-else-if="enrolledExamIds.has(exam.id)" class="enrolled-badge">
                   <span class="material-symbols-outlined text-[14px]">check</span>
                   Enrolled
                 </span>
@@ -1031,9 +1047,20 @@ async function runDiagnostics() {
                   Details
                 </button>
 
+                <!-- If Completed / Submitted -->
+                <button
+                  v-if="isExamCompleted(exam)"
+                  type="button"
+                  class="btn-disabled flex-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default"
+                  disabled
+                >
+                  <span class="material-symbols-outlined text-[16px]">task_alt</span>
+                  Test Finished
+                </button>
+
                 <!-- If Enrolled & Live -->
                 <button
-                  v-if="isExamLive(exam) && enrolledExamIds.has(exam.id)"
+                  v-else-if="isExamLive(exam) && enrolledExamIds.has(exam.id)"
                   type="button"
                   class="btn-enter flex-1"
                   @click="enterExamWorkspace(exam)"
@@ -1298,7 +1325,7 @@ async function runDiagnostics() {
             </div>
 
             <button
-              v-if="leaderboardExam && isExamLive(leaderboardExam as any)"
+              v-if="leaderboardExam && isExamLive(leaderboardExam as any) && !completedExamIds.has(leaderboardExam.id)"
               type="button"
               class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
               @click="enterExamWorkspace(leaderboardExam as any)"
@@ -1306,6 +1333,13 @@ async function runDiagnostics() {
               <span class="material-symbols-outlined text-[15px]">rocket_launch</span>
               Enter Workspace
             </button>
+            <span
+              v-else-if="leaderboardExam && completedExamIds.has(leaderboardExam.id)"
+              class="px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold text-xs rounded-xl flex items-center gap-1.5"
+            >
+              <span class="material-symbols-outlined text-[15px]">task_alt</span>
+              Test Finished
+            </span>
           </div>
 
           <!-- Search & Filter Bar -->
@@ -1538,6 +1572,7 @@ async function runDiagnostics() {
       :is-open="showExamModal"
       :is-enrolled="selectedExamForModal ? enrolledExamIds.has(selectedExamForModal.id) : false"
       :is-live="selectedExamForModal ? isExamLive(selectedExamForModal) : false"
+      :is-completed="selectedExamForModal ? isExamCompleted(selectedExamForModal) : false"
       @close="showExamModal = false"
       @enroll="(ex) => { showExamModal = false; triggerEnroll(ex as ExamItem); }"
       @enter="enterExamWorkspace"

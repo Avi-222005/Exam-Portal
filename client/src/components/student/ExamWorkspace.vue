@@ -17,7 +17,7 @@ import { useToastStore } from '../../stores/toast';
 import { useResizable } from '../../composables/useResizable';
 import { useTimer } from '../../composables/useTimer';
 import { useFullscreenGuard } from '../../composables/useFullscreenGuard';
-import { submitMcqSection } from '../../services/api';
+import { submitMcqSection, submitExam } from '../../services/api';
 import type { Problem } from '../../types';
 
 const router = useRouter();
@@ -297,6 +297,18 @@ async function handleConfirmSubmitTest() {
         });
       } catch {
         // Continue
+      }
+    }
+
+    // 2. Finalize and submit the entire exam on backend
+    if (examStore.activeExam?.id) {
+      try {
+        await submitExam(examStore.activeExam.id);
+        if (examStore.myProgress) {
+          examStore.myProgress.isCompleted = true;
+        }
+      } catch (err) {
+        console.warn('[workspace] Finalize exam error:', err);
       }
     }
 

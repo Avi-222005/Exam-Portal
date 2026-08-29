@@ -187,6 +187,7 @@ watch(
 const examState = computed(() => {
   if (loading.value) return 'loading';
   if (!examStore.activeExam) return 'no-exam';
+  if (examStore.myProgress?.isCompleted) return 'submitted';
   if (examStore.myProgress?.allSolved) return 'completed';
   if (isExpired.value) return 'ended';
   return 'active';
@@ -233,6 +234,36 @@ function goDashboard() {
         <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
           Check back when an exam is scheduled. You'll be notified when it goes
           live.
+        </p>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 active:scale-95 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-150 cursor-pointer"
+          @click="goDashboard"
+        >
+          <span class="material-symbols-outlined text-[18px]">dashboard</span>
+          <span>Back to Dashboard</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Exam submitted / finalized -->
+    <div
+      v-else-if="examState === 'submitted'"
+      class="flex flex-1 items-center justify-center state-screen-enter"
+    >
+      <div class="text-center max-w-sm px-6 flex flex-col items-center">
+        <span
+          class="material-symbols-outlined text-5xl text-emerald-400 mb-4 block"
+          >task_alt</span
+        >
+        <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+          Test Finished
+        </h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">
+          You have submitted this exam.
+        </p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
+          Your submissions have been recorded. Results will be published after the exam closes.
         </p>
         <button
           type="button"

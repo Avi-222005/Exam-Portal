@@ -15,6 +15,12 @@ export class ExamEnrollment extends BaseEntity {
   @CreateDateColumn({ type: 'timestamptz' })
   enrolledAt: Date;
 
+  @Column({ type: 'boolean', default: false })
+  isCompleted: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  completedAt: Date | null;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
 

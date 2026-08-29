@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 import { useExamStore } from '../../stores/exam';
 import { useProblemsStore } from '../../stores/problems';
@@ -21,6 +21,22 @@ const authStore = useAuthStore();
 const examStore = useExamStore();
 const problemsStore = useProblemsStore();
 const uiStore = useUiStore();
+
+// Internet status detection
+const isOnline = ref(navigator.onLine);
+function updateOnlineStatus() {
+  isOnline.value = navigator.onLine;
+}
+
+onMounted(() => {
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('online', updateOnlineStatus);
+  window.removeEventListener('offline', updateOnlineStatus);
+});
 
 // Section dropdown toggle
 const isDropdownOpen = ref(false);
@@ -87,6 +103,18 @@ const examTitle = computed(() => {
 
 <template>
   <div class="flex flex-col select-none flex-shrink-0 z-30">
+    <!-- ── Top Status Banner ──────────────────────────────────────── -->
+    <div
+      class="h-7 w-full flex items-center justify-center text-xs font-semibold tracking-wide transition-colors duration-300"
+      :class="
+        isOnline
+          ? 'bg-[#bbf7d0] text-[#15803d]'
+          : 'bg-[#fee2e2] text-[#b91c1c] animate-pulse'
+      "
+    >
+      Internet Status: {{ isOnline ? 'Online' : 'Offline' }}
+    </div>
+
     <!-- ── Main Header ───────────────────────────────────────────── -->
     <header
       class="h-14 px-4 bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm relative"

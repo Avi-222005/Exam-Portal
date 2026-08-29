@@ -17,7 +17,9 @@ import {
 } from '@nestjs/swagger';
 import { AutosaveService } from './autosave.service';
 import { Auth } from '../common/decorators/auth.decorator';
+import { AuthType } from '../common/enums/auth-type.enum';
 import { GetUser } from '../common/decorators/get-user.decorator';
+import { ExamWindowGuard } from '../exams/guards/exam-window.guard';
 import { User } from '../entities/user.entity';
 import { SaveAutosaveDto } from './dto/save-autosave.dto';
 
@@ -30,6 +32,7 @@ export class AutosaveController {
   constructor(private readonly autosaveService: AutosaveService) {}
 
   @Post(':examId')
+  @Auth(AuthType.JWT, [ExamWindowGuard])
   @ApiOperation({
     summary: 'Save code state',
     description:

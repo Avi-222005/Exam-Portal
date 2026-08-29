@@ -100,6 +100,10 @@ export class ExamsService {
     const totalUnits = codingProblemIds.length + (hasMcq ? 1 : 0);
     const solvedUnits = solvedCodingIds.length + (mcqSectionSubmitted ? 1 : 0);
 
+    const enrollment = await this.enrollmentRepo.findOne({
+      where: { userId, examId: exam.id },
+    });
+
     return {
       examId: exam.id,
       totalProblems: totalUnits,
@@ -108,7 +112,43 @@ export class ExamsService {
       solvedProblemIds: solvedCodingIds,
       mcqSectionSubmitted,
       mcqProblemCount: mcqProblemIds.length,
+      isCompleted: enrollment?.isCompleted ?? false,
+      completedAt: enrollment?.completedAt ?? null,
     };
+  }
+
+  async finishExam(
+    userId: number,
+    examId: number,
+  ): Promise<{ success: boolean; completedAt: Date }> {
+    const exam = await this.getById(examId);
+
+    let enrollment = await this.enrollmentRepo.findOne({
+      where: { userId, examId: exam.id },
+    });
+
+    const completedAt = new Date();
+    if (!enrollment) {
+      enrollment = this.enrollmentRepo.create({
+        userId,
+        examId: exam.id,
+        isCompleted: true,
+        completedAt,
+      });
+    } else {
+      enrollment.isCompleted = true;
+      enrollment.completedAt = completedAt;
+    }
+
+    await this.enrollmentRepo.save(enrollment);
+    return { success: true, completedAt };
+  }
+
+  async isExamCompleted(userId: number, examId: number): Promise<boolean> {
+    const enrollment = await this.enrollmentRepo.findOne({
+      where: { userId, examId },
+    });
+    return !!enrollment?.isCompleted;
   }
 
   async enroll(

@@ -44,6 +44,11 @@ export class ExamWindowGuard implements CanActivate {
       throw new ForbiddenException('You are not enrolled in this exam');
     }
 
+    const isCompleted = await this.examsService.isExamCompleted(user.id, exam.id);
+    if (isCompleted) {
+      throw new ForbiddenException('You have already submitted this exam. Access to the test workspace is closed.');
+    }
+
     request.exam = exam;
     return true;
   }

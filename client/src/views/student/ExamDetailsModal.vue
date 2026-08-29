@@ -19,6 +19,7 @@ const props = defineProps<{
   isOpen: boolean;
   isEnrolled: boolean;
   isLive: boolean;
+  isCompleted?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -138,7 +139,16 @@ function formatDuration(minutes: number): string {
 
           <div class="flex items-center gap-3">
             <button
-              v-if="isLive"
+              v-if="isCompleted"
+              type="button"
+              class="px-5 py-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-default"
+              disabled
+            >
+              <span class="material-symbols-outlined text-[16px]">task_alt</span>
+              Test Finished
+            </button>
+            <button
+              v-else-if="isLive"
               type="button"
               class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
               @click="emit('enter', exam)"
