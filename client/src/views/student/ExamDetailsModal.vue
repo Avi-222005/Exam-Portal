@@ -151,7 +151,12 @@ function formatDuration(minutes: number): string {
             <button
               v-else-if="isLive"
               type="button"
-              class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+              :class="[
+                'px-5 py-2 text-white font-bold text-xs rounded-xl shadow-lg flex items-center gap-1.5 transition-all cursor-pointer',
+                isStarted
+                  ? 'bg-orange-500 hover:bg-orange-600 active:bg-orange-700 shadow-orange-500/25'
+                  : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20',
+              ]"
               @click="emit('enter', exam)"
             >
               <span class="material-symbols-outlined text-[16px]">{{ isStarted ? 'play_circle' : 'play_arrow' }}</span>

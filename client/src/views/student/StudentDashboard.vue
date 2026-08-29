@@ -1086,7 +1086,7 @@ async function runDiagnostics() {
                 <button
                   v-else-if="isExamLive(exam) && enrolledExamIds.has(exam.id) && isExamStarted(exam)"
                   type="button"
-                  class="btn-enter flex-1"
+                  class="btn-resume flex-1"
                   @click="enterExamWorkspace(exam)"
                 >
                   <span class="material-symbols-outlined text-[16px]">play_circle</span>
@@ -1362,7 +1362,12 @@ async function runDiagnostics() {
             <button
               v-if="leaderboardExam && isExamLive(leaderboardExam as any) && !completedExamIds.has(leaderboardExam.id)"
               type="button"
-              class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+              :class="[
+                'px-3.5 py-1.5 font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 text-white transition-all',
+                isExamStarted(leaderboardExam as any)
+                  ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20'
+                  : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20',
+              ]"
               @click="enterExamWorkspace(leaderboardExam as any)"
             >
               <span class="material-symbols-outlined text-[15px]">{{ isExamStarted(leaderboardExam as any) ? 'play_circle' : 'play_arrow' }}</span>
@@ -1789,6 +1794,12 @@ async function runDiagnostics() {
 .btn-enter {
   @apply py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold
          text-xs rounded-xl shadow-md shadow-emerald-500/20 flex items-center justify-center
+         gap-1.5 transition-all active:scale-[0.98] cursor-pointer;
+}
+
+.btn-resume {
+  @apply py-2 px-3 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-bold
+         text-xs rounded-xl shadow-md shadow-orange-500/25 flex items-center justify-center
          gap-1.5 transition-all active:scale-[0.98] cursor-pointer;
 }
 
