@@ -16,6 +16,8 @@ import { LeaderboardService } from './leaderboard.service';
 import { Auth } from '../common/decorators/auth.decorator';
 import { AuthType } from '../common/enums/auth-type.enum';
 import { AdminGuard } from './guards/admin.guard';
+import { GetUser } from '../common/decorators/get-user.decorator';
+import { User } from '../entities/user.entity';
 import { AdminSetupDto } from './dto/admin-setup.dto';
 import { AdminRegisterDto } from './dto/admin-register.dto';
 import { CreateExamDto } from './dto/create-exam.dto';
@@ -49,6 +51,12 @@ export class AdminController {
   ) {}
 
   // --- Public: Admin Setup ---
+
+  @Get('setup-status')
+  @Auth(AuthType.NONE)
+  async getSetupStatus() {
+    return this.adminService.getSetupStatus();
+  }
 
   @Post('setup')
   @Auth(AuthType.NONE)
@@ -350,8 +358,11 @@ export class AdminController {
 
   @Post('users')
   @Auth(AuthType.JWT, [AdminGuard])
-  async createUser(@Body() dto: CreateUserDto) {
-    return this.usersService.adminCreate(dto);
+  async createUser(
+    @GetUser() adminUser: User,
+    @Body() dto: CreateUserDto,
+  ) {
+    return this.usersService.adminCreate(dto, adminUser.id);
   }
 
   @Put('users/:id')

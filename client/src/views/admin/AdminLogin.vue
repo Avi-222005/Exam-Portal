@@ -15,6 +15,8 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const mode = ref<'login' | 'signup'>('login');
+const isSetupAllowed = ref(false);
+const checkingSetup = ref(true);
 const email = ref('');
 const password = ref('');
 const firstName = ref('');
@@ -23,9 +25,28 @@ const setupKey = ref('');
 const error = ref('');
 const loading = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
   if (authStore.isAuthenticated && authStore.user?.role === 'ADMIN') {
     void router.replace({ name: 'admin-dashboard' });
+    return;
+  }
+
+  try {
+    const { data } = await api.get<{ hasAdmin: boolean; isSetupAllowed: boolean }>(
+      '/admin/setup-status',
+    );
+    isSetupAllowed.value = data.isSetupAllowed;
+    if (data.isSetupAllowed) {
+      mode.value = 'signup';
+    } else {
+      mode.value = 'login';
+    }
+  } catch {
+    // Default to secure login mode if status check fails
+    isSetupAllowed.value = false;
+    mode.value = 'login';
+  } finally {
+    checkingSetup.value = false;
   }
 });
 
@@ -106,7 +127,7 @@ async function submitSignup() {
       err as { response?: { status?: number; data?: { message?: string } } }
     )?.response;
     if (res?.status === 403) {
-      error.value = 'Invalid setup key.';
+      error.value = res.data?.message || 'Invalid setup key.';
     } else if (res?.status === 409) {
       error.value = res.data?.message || 'User already exists.';
     } else {
@@ -136,8 +157,17 @@ async function submitSignup() {
         <p class="subtitle">Admin Panel</p>
       </div>
 
-      <!-- Mode tabs -->
-      <div class="tabs">
+      <!-- Initial Setup Notice Badge (shown only if system has 0 admins) -->
+      <div
+        v-if="isSetupAllowed && mode === 'signup'"
+        class="mb-5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-center text-xs flex items-center justify-center gap-2"
+      >
+        <span class="material-symbols-outlined text-[18px]">key</span>
+        <span>Initial System Setup — Create Root Admin</span>
+      </div>
+
+      <!-- Mode tabs (ONLY visible when initial admin setup is allowed) -->
+      <div v-if="isSetupAllowed" class="tabs">
         <button
           class="tab"
           :class="mode === 'login' ? 'tab-active' : 'tab-inactive'"
@@ -156,7 +186,7 @@ async function submitSignup() {
             error = '';
           "
         >
-          Sign Up
+          Initial Setup
         </button>
       </div>
 

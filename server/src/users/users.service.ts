@@ -2,6 +2,9 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
+  UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, QueryFailedError, Not } from 'typeorm';
@@ -59,6 +62,14 @@ export class UsersService {
     return this.userRepo.findOne({ where: { id } });
   }
 
+  async findByIdWithPassword(id: number): Promise<User | null> {
+    return this.userRepo
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.id = :id', { id })
+      .getOne();
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepo.findOne({ where: { email } });
   }
@@ -80,6 +91,12 @@ export class UsersService {
   async count(excludeAdmins: boolean = false): Promise<number> {
     return this.userRepo.count({
       where: excludeAdmins ? { role: Not(UserRole.ADMIN) } : undefined,
+    });
+  }
+
+  async countAdmins(): Promise<number> {
+    return this.userRepo.count({
+      where: { role: UserRole.ADMIN },
     });
   }
 
@@ -122,7 +139,27 @@ export class UsersService {
     return { data, total, page, limit };
   }
 
-  async adminCreate(dto: CreateUserDto): Promise<User> {
+  async adminCreate(dto: CreateUserDto, requestingAdminId?: number): Promise<User> {
+    if (dto.role === UserRole.ADMIN) {
+      if (!requestingAdminId) {
+        throw new ForbiddenException(
+          'Admin accounts can only be created by an authenticated administrator.',
+        );
+      }
+      if (!dto.currentAdminPassword) {
+        throw new BadRequestException(
+          'Your current administrator password is required to authorize creating an admin account.',
+        );
+      }
+      const requestingAdmin = await this.findByIdWithPassword(requestingAdminId);
+      if (
+        !requestingAdmin ||
+        !(await bcrypt.compare(dto.currentAdminPassword, requestingAdmin.password))
+      ) {
+        throw new UnauthorizedException('Invalid current administrator password.');
+      }
+    }
+
     const existing = await this.userRepo.findOne({
       where: [{ email: dto.email }, { rollNumber: dto.rollNumber }],
     });

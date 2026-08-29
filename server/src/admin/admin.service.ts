@@ -935,7 +935,22 @@ export class AdminService {
 
   // --- Admin Setup ---
 
+  async getSetupStatus() {
+    const adminCount = await this.usersService.countAdmins();
+    return {
+      hasAdmin: adminCount > 0,
+      isSetupAllowed: adminCount === 0,
+    };
+  }
+
   async adminSetup(email: string, setupKey: string) {
+    const adminCount = await this.usersService.countAdmins();
+    if (adminCount > 0) {
+      throw new ForbiddenException(
+        'Initial administrator setup is completed. Additional administrators can only be created from within the Admin Panel.',
+      );
+    }
+
     const expectedKey = SECRETS.ADMIN_SETUP_KEY;
     if (!expectedKey || setupKey !== expectedKey) {
       throw new ForbiddenException('Invalid setup key');
@@ -948,6 +963,13 @@ export class AdminService {
   }
 
   async adminRegister(dto: AdminRegisterDto) {
+    const adminCount = await this.usersService.countAdmins();
+    if (adminCount > 0) {
+      throw new ForbiddenException(
+        'Initial administrator setup is completed. Additional administrators can only be created from within the Admin Panel.',
+      );
+    }
+
     const expectedKey = SECRETS.ADMIN_SETUP_KEY;
     if (!expectedKey || dto.setupKey !== expectedKey) {
       throw new ForbiddenException('Invalid setup key');

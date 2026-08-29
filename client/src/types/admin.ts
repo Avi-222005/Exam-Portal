@@ -277,6 +277,7 @@ export interface CreateUserPayload {
   countryCode?: string;
   phoneNumber?: string;
   role?: 'STUDENT' | 'ADMIN';
+  currentAdminPassword?: string;
 }
 
 export interface UpdateUserPayload extends Partial<

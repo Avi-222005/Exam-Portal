@@ -23,6 +23,7 @@ const form = ref({
   countryCode: '',
   phoneNumber: '',
   role: 'STUDENT' as 'STUDENT' | 'ADMIN',
+  currentAdminPassword: '',
 });
 
 onMounted(async () => {
@@ -39,6 +40,7 @@ onMounted(async () => {
       countryCode: u.countryCode ?? '',
       phoneNumber: u.phoneNumber ?? '',
       role: u.role ?? 'STUDENT',
+      currentAdminPassword: '',
     };
   } catch (err: unknown) {
     const e = extractError(err);
@@ -71,6 +73,10 @@ async function save() {
         email: form.value.email,
         password: form.value.password,
         role: form.value.role,
+        currentAdminPassword:
+          form.value.role === 'ADMIN'
+            ? form.value.currentAdminPassword
+            : undefined,
       });
     }
     void router.push({ name: 'admin-users' });
@@ -244,6 +250,32 @@ function extractError(err: unknown): { message: string; raw: string } {
           ]"
           placeholder="Select role…"
         />
+      </div>
+
+      <!-- Current Admin Password Confirmation (Required when creating an ADMIN user) -->
+      <div
+        v-if="!isEdit && form.role === 'ADMIN'"
+        class="flex flex-col gap-2.5 p-4 rounded-xl bg-purple-500/10 border border-purple-500/30 animate-in fade-in duration-200"
+      >
+        <div class="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold text-xs">
+          <span class="material-symbols-outlined text-[18px]">verified_user</span>
+          <span>Administrator Authorization Required</span>
+        </div>
+        <p class="text-[11px] text-slate-600 dark:text-slate-300">
+          Creating a new Administrator requires confirming <strong>YOUR</strong> current administrator password.
+        </p>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[13px] font-semibold text-slate-800 dark:text-slate-200">
+            Your Current Admin Password <span class="text-primary ml-0.5">*</span>
+          </label>
+          <input
+            v-model="form.currentAdminPassword"
+            type="password"
+            class="w-full bg-slate-50 dark:bg-background-dark border border-purple-400/50 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 outline-none transition-colors font-medium"
+            placeholder="Enter your current password"
+            required
+          />
+        </div>
       </div>
 
       <div
