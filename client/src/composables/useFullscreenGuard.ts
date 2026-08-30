@@ -77,18 +77,35 @@ export function useFullscreenGuard(
     return violationCount.value >= maxViolations.value;
   });
 
+  const isGuardModalActive = computed(() => {
+    if (!isProctored.value) return false;
+    if (isLockedOut.value) return true;
+    if (showGuardModal.value) return true;
+    if (config.value.enforceFullscreen && (!isStarted.value || !isFullscreen.value)) {
+      return true;
+    }
+    return false;
+  });
+
   // Shield flag: whenever modal is visible, focus is lost, or not in fullscreen,
   // question and code editor content must be completely unmounted from the DOM!
   const isQuestionContentHidden = computed(() => {
     if (!isProctored.value) return false;
     return (
-      !isStarted.value ||
-      showGuardModal.value ||
-      isCurrentlyViolating.value ||
-      isLockedOut.value ||
-      (config.value.enforceFullscreen && !isFullscreen.value)
+      isGuardModalActive.value ||
+      isCurrentlyViolating.value
     );
   });
+
+  watch(
+    () => [isProctored.value, config.value.enforceFullscreen],
+    ([proctored, enforceFs]) => {
+      if (!proctored || !enforceFs) {
+        isStarted.value = true;
+      }
+    },
+    { immediate: true },
+  );
 
   function checkSidePanelStatus(): boolean {
     if (typeof window === 'undefined') return false;
@@ -483,6 +500,7 @@ export function useFullscreenGuard(
     isQuestionContentHidden,
     isStarted,
     isProctored,
+    isGuardModalActive,
     config,
     enterFullscreen,
     exitFullscreen,

@@ -31,8 +31,6 @@ const toastStore = useToastStore();
 
 // Fullscreen Proctoring Guard
 const {
-  isFullscreen,
-  showGuardModal,
   violationCount,
   currentViolationReason,
   isSidePanelOpen,
@@ -40,6 +38,7 @@ const {
   maxViolations,
   isQuestionContentHidden,
   isStarted,
+  isGuardModalActive,
   enterFullscreen,
   exitFullscreen,
   clearSession,
@@ -526,7 +525,7 @@ async function handleConfirmSubmitTest() {
 
     <!-- ── Fullscreen Proctoring Guard Modal ───────────────────────── -->
     <FullscreenGuardModal
-      v-else-if="!isStarted || showGuardModal || !isFullscreen || isLockedOut"
+      v-else-if="isGuardModalActive"
       :is-initial-prompt="!isStarted"
       :violation-count="violationCount"
       :violation-reason="currentViolationReason"

@@ -12,6 +12,7 @@ import { themeColors } from '../config/theme';
 import { useUiStore } from '../stores/ui';
 import { useToastStore } from '../stores/toast';
 import { useClipboardStore } from '../stores/clipboard';
+import { useExamStore } from '../stores/exam';
 
 // Use the minimal editor API entry - avoids pulling in all 100+ language servers
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
@@ -147,6 +148,13 @@ export function useMonaco(
   }
 
   function isAllowedText(pastedText: string): boolean {
+    const examStore = useExamStore();
+    const cfg = examStore.activeExam?.proctoringConfig;
+    if (cfg) {
+      if (cfg.isProctored === false || cfg.preventCopyPaste === false) {
+        return true;
+      }
+    }
     if (!pastedText) return true;
     const normalized = normalizeClip(pastedText);
     if (!normalized) return true;
@@ -195,15 +203,21 @@ export function useMonaco(
       Boolean(activeEl?.closest('.monaco-editor')) ||
       Boolean(containerRef.value?.contains(activeEl));
 
-    if (isInsideMonaco) {
-      e.preventDefault();
-      e.stopPropagation();
-      toastStore.add(
-        'warning',
-        'Dragging external content is disabled during the exam.',
-        3000,
-      );
+    if (!isInsideMonaco) return;
+
+    const examStore = useExamStore();
+    const cfg = examStore.activeExam?.proctoringConfig;
+    if (cfg && (cfg.isProctored === false || cfg.preventCopyPaste === false)) {
+      return;
     }
+
+    e.preventDefault();
+    e.stopPropagation();
+    toastStore.add(
+      'warning',
+      'Dragging external content is disabled during the exam.',
+      3000,
+    );
   }
 
   onMounted(() => {

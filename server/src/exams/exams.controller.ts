@@ -82,6 +82,16 @@ export class ExamsController {
         allowedLanguages: exam.allowedLanguages,
         accessType: exam.accessType,
         maxViolations: exam.maxViolations ?? 5,
+        proctoringConfig: exam.proctoringConfig ?? {
+          isProctored: true,
+          enforceFullscreen: true,
+          preventTabSwitching: true,
+          detectSidePanel: true,
+          preventCopyPaste: true,
+          blockDevTools: true,
+          showWatermark: true,
+          maxViolations: exam.maxViolations ?? 5,
+        },
       })),
       metadata: {
         serverTime: new Date().toISOString(),
