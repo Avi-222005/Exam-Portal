@@ -128,15 +128,18 @@ const activeLabel = computed(() => {
         >
           <span class="material-symbols-outlined text-[20px]">menu</span>
         </button>
-        <RouterLink to="/" class="flex items-center gap-2.5 no-underline" title="Go to Home">
+        <RouterLink to="/" class="flex items-center gap-2 no-underline" title="Go to Home">
           <img
             :src="brand.logoPath"
             :alt="brand.appName"
             class="h-7 object-contain"
             style="filter: drop-shadow(0 0 8px rgb(var(--color-primary)))"
           />
+          <span class="font-bisdak text-xl font-bold tracking-wide text-primary dark:text-[#f4f4f7] select-none transition-colors">
+            scorix
+          </span>
           <span
-            class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest"
+            class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-0.5"
             >Admin</span
           >
         </RouterLink>

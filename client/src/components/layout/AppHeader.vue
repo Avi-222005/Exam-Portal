@@ -143,13 +143,16 @@ onUnmounted(() => {
   <header class="header">
     <!-- Left: Logo + exam context -->
     <div class="flex items-center gap-3 min-w-0">
-      <button class="logo-btn" @click="goHome">
+      <button class="logo-btn flex items-center gap-2.5" @click="goHome">
         <img
           :src="brand.logoPath"
           :alt="brand.appName"
           class="h-7 object-contain"
           style="filter: drop-shadow(0 0 6px rgb(var(--color-primary) / 0.5))"
         />
+        <span class="font-bisdak text-2xl font-bold tracking-wide text-primary dark:text-[#f4f4f7] select-none transition-colors">
+          scorix
+        </span>
       </button>
 
       <!-- Workspace context: divider + exam title + timer -->

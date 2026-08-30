@@ -663,15 +663,18 @@ async function runDiagnostics() {
         >
           <span class="material-symbols-outlined text-[20px]">menu</span>
         </button>
-        <router-link to="/" class="flex items-center gap-2.5 no-underline" title="Go to Home">
+        <router-link to="/" class="flex items-center gap-2 no-underline" title="Go to Home">
           <img
             :src="brand.logoPath"
             :alt="brand.appName"
             class="h-7 object-contain"
             style="filter: drop-shadow(0 0 8px rgb(var(--color-primary)))"
           />
+          <span class="font-bisdak text-xl font-bold tracking-wide text-primary dark:text-[#f4f4f7] select-none transition-colors">
+            scorix
+          </span>
           <span
-            class="text-[10px] font-semibold text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20"
+            class="text-[10px] font-semibold text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 ml-0.5"
           >
             Student
           </span>

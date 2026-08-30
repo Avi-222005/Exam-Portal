@@ -21,6 +21,7 @@ export default {
         sans: ['Figtree', 'sans-serif'],
         display: ['Figtree', 'sans-serif'],
         mono: ['"JetBrains Mono"', '"Fira Code"', '"Courier New"', 'monospace'],
+        bisdak: ['Bisdak', 'sans-serif'],
       },
       borderRadius: {
         DEFAULT: '0.125rem',

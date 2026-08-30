@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Bisdak';
+  src: url('/fonts/Bisdak.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ── CSS custom properties ── */
 :root {
   --app-text-scale: 1;
