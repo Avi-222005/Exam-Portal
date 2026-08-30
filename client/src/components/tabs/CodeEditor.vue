@@ -25,7 +25,18 @@ const code = computed({
   },
 });
 
-const { editor } = useMonaco(containerRef, monacoLang, code);
+const { editor, formatDocument } = useMonaco(containerRef, monacoLang, code);
+
+const isFormatting = ref(false);
+async function handleFormatCode() {
+  if (isFormatting.value) return;
+  isFormatting.value = true;
+  try {
+    await formatDocument();
+  } finally {
+    isFormatting.value = false;
+  }
+}
 
 watch(
   () => uiStore.activeTab,
@@ -241,6 +252,19 @@ const langStyle = computed(() => {
             >
           </span>
         </Transition>
+
+        <!-- Prettify / Format Code -->
+        <button
+          class="toolbar-btn group"
+          :class="isFormatting ? 'opacity-50 cursor-wait' : ''"
+          title="Prettify / Format Code (Shift+Alt+F)"
+          @click="handleFormatCode"
+        >
+          <span class="material-symbols-outlined text-[15px] text-blue-500 group-hover:rotate-12 transition-transform">
+            auto_fix_high
+          </span>
+          <span class="toolbar-tip">Prettify (Shift+Alt+F)</span>
+        </button>
 
         <!-- Reset -->
         <button

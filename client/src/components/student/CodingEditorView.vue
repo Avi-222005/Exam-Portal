@@ -32,7 +32,21 @@ const code = computed({
   },
 });
 
-const { editor } = useMonaco(containerRef, monacoLang, code);
+const { editor, formatDocument } = useMonaco(containerRef, monacoLang, code);
+
+const isFormatting = ref(false);
+async function handleFormatCode() {
+  if (isFormatting.value) return;
+  isFormatting.value = true;
+  try {
+    const success = await formatDocument();
+    if (success) {
+      toastStore.add('info', 'Code formatted', 2000);
+    }
+  } finally {
+    isFormatting.value = false;
+  }
+}
 
 // Re-layout editor on resize
 watch(
@@ -168,8 +182,24 @@ const testcaseResults = computed(() => {
         Fill your code here
       </span>
 
-      <!-- Right controls: Language + Theme + Fullscreen -->
+      <!-- Right controls: Prettify + Language + Theme + Fullscreen -->
       <div class="flex items-center gap-2">
+        <!-- Prettify / Format Code Button -->
+        <button
+          type="button"
+          class="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-[#27272a] hover:bg-blue-50 dark:hover:bg-blue-950/30 border border-slate-300 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 rounded text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-all shadow-2xs cursor-pointer group"
+          :class="isFormatting ? 'opacity-70 cursor-wait' : ''"
+          title="Format / Prettify Code (Shift+Alt+F)"
+          @click="handleFormatCode"
+        >
+          <span
+            class="material-symbols-outlined text-[15px] text-blue-600 dark:text-blue-400 group-hover:rotate-12 transition-transform"
+          >
+            auto_fix_high
+          </span>
+          <span>Prettify</span>
+        </button>
+
         <!-- Language selector -->
         <div class="relative">
           <select

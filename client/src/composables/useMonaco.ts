@@ -13,6 +13,7 @@ import { useUiStore } from '../stores/ui';
 import { useToastStore } from '../stores/toast';
 import { useClipboardStore } from '../stores/clipboard';
 import { useExamStore } from '../stores/exam';
+import { formatCode } from '../utils/codeFormatter';
 
 // Use the minimal editor API entry - avoids pulling in all 100+ language servers
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
@@ -289,11 +290,77 @@ export function useMonaco(
       code.value = val;
     });
 
+    // Register Code Formatter (Prettify) Action & Shortcuts
+    editor.value.addAction({
+      id: 'format-document-custom',
+      label: 'Format Document (Prettify)',
+      keybindings: [
+        monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF,
+        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF,
+      ],
+      contextMenuGroupId: '1_modification',
+      contextMenuOrder: 1.5,
+      run: async () => {
+        const success = await formatDocument();
+        if (success) {
+          toastStore.add('info', 'Code formatted', 2000);
+        }
+      },
+    });
+
     window.addEventListener('copy', onWindowCopyOrCut, true);
     window.addEventListener('cut', onWindowCopyOrCut, true);
     window.addEventListener('paste', onWindowPaste, true);
     window.addEventListener('drop', onWindowDrop, true);
   });
+
+  async function formatDocument(): Promise<boolean> {
+    if (!editor.value) return false;
+
+    // 1. First attempt Monaco's native document formatting action if available
+    const formatAction = editor.value.getAction('editor.action.formatDocument');
+    if (formatAction && formatAction.isSupported()) {
+      try {
+        await formatAction.run();
+        return true;
+      } catch (err) {
+        console.debug(
+          '[formatDocument] Native Monaco formatter not available, using universal formatter',
+          err,
+        );
+      }
+    }
+
+    // 2. Multi-language intelligent formatter engine
+    const currentVal = editor.value.getValue();
+    if (!currentVal || !currentVal.trim()) return true;
+
+    try {
+      const formatted = formatCode(currentVal, language.value);
+      if (formatted !== currentVal) {
+        const model = editor.value.getModel();
+        if (model) {
+          const viewState = editor.value.saveViewState();
+          editor.value.executeEdits('code-formatter', [
+            {
+              range: model.getFullModelRange(),
+              text: formatted,
+              forceMoveMarkers: true,
+            },
+          ]);
+          if (viewState) {
+            editor.value.restoreViewState(viewState);
+          }
+          code.value = formatted;
+          lastSetValue = formatted;
+        }
+      }
+      return true;
+    } catch (err) {
+      console.warn('[formatDocument] Formatting error', err);
+      return false;
+    }
+  }
 
   // Vue → Monaco: code changed from outside (language switch, problem change,
   // autosave restore). Only sync when the new value is different from what
@@ -351,5 +418,8 @@ export function useMonaco(
     editor.value = null;
   });
 
-  return { editor };
+  return {
+    editor,
+    formatDocument,
+  };
 }
