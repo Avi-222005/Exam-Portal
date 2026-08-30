@@ -95,7 +95,7 @@ function formatImageSrc(data: string | null | undefined): string {
       <!-- Problem Statement Section -->
       <div class="mb-5 select-none">
         <h3 class="font-bold text-slate-800 dark:text-slate-200 underline mb-2 select-none scalable-heading">
-          Problem Statement
+          {{ problem.title || 'Problem Statement' }}
         </h3>
         <div class="text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed select-none pointer-events-none scalable-text">
           <ObfuscatedText :text="problem.description || problem.title" />
