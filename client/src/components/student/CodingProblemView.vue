@@ -16,6 +16,32 @@ const emit = defineEmits<{
 
 const marks = computed(() => props.problem.maxScore ?? 10);
 
+const sampleCases = computed(() => {
+  const list: Array<{ input: string; output: string }> = [];
+
+  // 1. From problem.testCases (visible test cases)
+  if (props.problem.testCases && Array.isArray(props.problem.testCases)) {
+    for (const tc of props.problem.testCases) {
+      if (tc.isVisible !== false && (tc.input || tc.expectedOutput)) {
+        list.push({
+          input: tc.input || '',
+          output: tc.expectedOutput || '',
+        });
+      }
+    }
+  }
+
+  // 2. If no test cases but problem.sampleInput / problem.sampleOutput exists
+  if (list.length === 0 && (props.problem.sampleInput || props.problem.sampleOutput)) {
+    list.push({
+      input: props.problem.sampleInput || '',
+      output: props.problem.sampleOutput || '',
+    });
+  }
+
+  return list;
+});
+
 function formatImageSrc(data: string | null | undefined): string {
   if (!data) return '';
   if (data.startsWith('data:image/')) return data;
@@ -126,38 +152,44 @@ function formatImageSrc(data: string | null | undefined): string {
 
       <!-- Sample Test Cases -->
       <div
-        v-if="problem.sampleInput || problem.sampleOutput"
+        v-if="sampleCases.length > 0"
         class="mb-4 select-none"
       >
         <h4 class="font-bold text-slate-800 dark:text-slate-200 mb-2 select-none scalable-heading">
           Sample test cases :
         </h4>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 select-none">
-          <!-- Sample Input Card -->
+        <div class="flex flex-col gap-3 select-none">
           <div
-            class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-md p-3 select-none"
+            v-for="(sc, idx) in sampleCases"
+            :key="idx"
+            class="grid grid-cols-1 md:grid-cols-2 gap-3 select-none"
           >
-            <div class="font-bold text-slate-800 dark:text-slate-200 mb-1.5 text-[11px] select-none scalable-heading">
-              Input 1 :
-            </div>
-            <pre
-              class="font-mono text-slate-700 dark:text-slate-300 text-[11px] whitespace-pre-wrap break-all select-none pointer-events-none scalable-code"
-              >{{ problem.sampleInput?.trim() || '(empty)' }}</pre
+            <!-- Sample Input Card -->
+            <div
+              class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-md p-3 select-none"
             >
-          </div>
+              <div class="font-bold text-slate-800 dark:text-slate-200 mb-1.5 text-[11px] select-none scalable-heading">
+                Input {{ idx + 1 }} :
+              </div>
+              <pre
+                class="font-mono text-slate-700 dark:text-slate-300 text-[11px] whitespace-pre-wrap break-all select-none pointer-events-none scalable-code"
+                >{{ sc.input.trim() || '(empty)' }}</pre
+              >
+            </div>
 
-          <!-- Sample Output Card -->
-          <div
-            class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-md p-3 select-none"
-          >
-            <div class="font-bold text-slate-800 dark:text-slate-200 mb-1.5 text-[11px] select-none scalable-heading">
-              Output 1 :
-            </div>
-            <pre
-              class="font-mono text-slate-700 dark:text-slate-300 text-[11px] whitespace-pre-wrap break-all select-none pointer-events-none scalable-code"
-              >{{ problem.sampleOutput?.trim() || '(empty)' }}</pre
+            <!-- Sample Output Card -->
+            <div
+              class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-md p-3 select-none"
             >
+              <div class="font-bold text-slate-800 dark:text-slate-200 mb-1.5 text-[11px] select-none scalable-heading">
+                Output {{ idx + 1 }} :
+              </div>
+              <pre
+                class="font-mono text-slate-700 dark:text-slate-300 text-[11px] whitespace-pre-wrap break-all select-none pointer-events-none scalable-code"
+                >{{ sc.output.trim() || '(empty)' }}</pre
+              >
+            </div>
           </div>
         </div>
       </div>

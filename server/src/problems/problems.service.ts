@@ -35,7 +35,7 @@ export class ProblemsService {
     const mappings = await this.problemToExamRepo.find({
       where: { examId },
       order: { displayOrder: 'ASC' },
-      relations: ['problem'],
+      relations: ['problem', 'problem.testCases'],
     });
     return mappings.map((m) => {
       const p = m.problem;
@@ -43,18 +43,39 @@ export class ProblemsService {
         p.questionType === 'mcq' && p.mcqOptions
           ? this.shuffleAndStripOptions(p.mcqOptions)
           : null;
+
+      // Only return visible test cases to students
+      const visibleTestCases = (p.testCases || [])
+        .filter((tc) => tc.isVisible)
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .map((tc) => ({
+          id: tc.id,
+          input: tc.input,
+          expectedOutput: tc.expectedOutput,
+          displayOrder: tc.displayOrder,
+          isVisible: true,
+        }));
+
       return {
         id: p.id,
         title: p.title,
         description: p.description,
+        inputFormat: p.inputFormat,
+        outputFormat: p.outputFormat,
+        constraints: p.constraints,
+        sampleInput: p.sampleInput,
+        sampleOutput: p.sampleOutput,
         difficulty: p.difficulty,
         maxScore: p.maxScore,
         starterCode: p.starterCode,
+        timeLimitMs: p.timeLimitMs,
+        memoryLimitKb: p.memoryLimitKb,
         displayOrder: m.displayOrder,
         questionType: p.questionType,
         isMultiSelect: p.isMultiSelect,
         questionImageData: p.questionImageData,
         mcqOptions,
+        testCases: visibleTestCases,
       };
     });
   }

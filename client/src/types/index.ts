@@ -63,6 +63,13 @@ export interface Problem {
   isMultiSelect?: boolean;
   questionImageData?: string | null;
   mcqOptions?: McqOption[] | null;
+  testCases?: Array<{
+    id?: number;
+    input: string;
+    expectedOutput: string;
+    displayOrder?: number;
+    isVisible?: boolean;
+  }>;
 }
 
 export interface TestCase {
