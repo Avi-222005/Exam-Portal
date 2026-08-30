@@ -150,7 +150,7 @@ onUnmounted(() => {
           class="h-7 object-contain"
           style="filter: drop-shadow(0 0 6px rgb(var(--color-primary) / 0.5))"
         />
-        <span class="font-bisdak text-2xl font-bold tracking-wide text-primary dark:text-[#f4f4f7] select-none transition-colors">
+        <span class="font-bisdak text-base font-bold tracking-wide text-primary dark:text-[#f4f4f7] select-none transition-colors">
           scorix
         </span>
       </button>

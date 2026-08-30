@@ -135,7 +135,7 @@ const activeLabel = computed(() => {
             class="h-7 object-contain"
             style="filter: drop-shadow(0 0 8px rgb(var(--color-primary)))"
           />
-          <span class="font-bisdak text-xl font-bold tracking-wide text-primary dark:text-[#f4f4f7] select-none transition-colors">
+          <span class="font-bisdak text-base font-bold tracking-wide text-primary dark:text-[#f4f4f7] select-none transition-colors">
             scorix
           </span>
           <span
