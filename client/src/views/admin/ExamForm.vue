@@ -46,6 +46,60 @@ const maxViolations = ref(5);
 const showCandidateModal = ref(false);
 const selectedLanguages = ref<number[]>([71, 62, 63, 54, 50]); // Python, Java, NodeJS, C++, C default
 
+// ── Proctoring & Anti-Cheating Guards ─────────────────────────────────────────
+const isProctored = ref(true);
+const enforceFullscreen = ref(true);
+const preventTabSwitching = ref(true);
+const detectSidePanel = ref(true);
+const preventCopyPaste = ref(true);
+const blockDevTools = ref(true);
+const showWatermark = ref(true);
+
+function applyProctoringPreset(mode: 'strict' | 'standard' | 'lenient' | 'disabled') {
+  if (mode === 'disabled') {
+    isProctored.value = false;
+    return;
+  }
+  isProctored.value = true;
+  if (mode === 'strict') {
+    enforceFullscreen.value = true;
+    preventTabSwitching.value = true;
+    detectSidePanel.value = true;
+    preventCopyPaste.value = true;
+    blockDevTools.value = true;
+    showWatermark.value = true;
+    maxViolations.value = 3;
+  } else if (mode === 'standard') {
+    enforceFullscreen.value = true;
+    preventTabSwitching.value = true;
+    detectSidePanel.value = true;
+    preventCopyPaste.value = true;
+    blockDevTools.value = true;
+    showWatermark.value = true;
+    maxViolations.value = 5;
+  } else if (mode === 'lenient') {
+    enforceFullscreen.value = false;
+    preventTabSwitching.value = false;
+    detectSidePanel.value = false;
+    preventCopyPaste.value = true;
+    blockDevTools.value = true;
+    showWatermark.value = true;
+    maxViolations.value = 999;
+  }
+}
+
+const activeGuardsCount = computed(() => {
+  if (!isProctored.value) return 0;
+  let count = 0;
+  if (enforceFullscreen.value) count++;
+  if (preventTabSwitching.value) count++;
+  if (detectSidePanel.value) count++;
+  if (preventCopyPaste.value) count++;
+  if (blockDevTools.value) count++;
+  if (showWatermark.value) count++;
+  return count;
+});
+
 const ALL_LANGUAGES = Object.entries(LANGUAGE_NAMES).map(([id, label]) => ({
   id: Number(id),
   label,
@@ -221,6 +275,27 @@ async function loadExamData() {
     passcode.value = exam.passcode || '';
     maxViolations.value = exam.maxViolations ?? 5;
     selectedLanguages.value = [...(exam.allowedLanguages || [])];
+
+    if (exam.proctoringConfig) {
+      isProctored.value = exam.proctoringConfig.isProctored !== false;
+      enforceFullscreen.value = exam.proctoringConfig.enforceFullscreen !== false;
+      preventTabSwitching.value = exam.proctoringConfig.preventTabSwitching !== false;
+      detectSidePanel.value = exam.proctoringConfig.detectSidePanel !== false;
+      preventCopyPaste.value = exam.proctoringConfig.preventCopyPaste !== false;
+      blockDevTools.value = exam.proctoringConfig.blockDevTools !== false;
+      showWatermark.value = exam.proctoringConfig.showWatermark !== false;
+      if (exam.proctoringConfig.maxViolations !== undefined) {
+        maxViolations.value = Number(exam.proctoringConfig.maxViolations);
+      }
+    } else {
+      isProctored.value = true;
+      enforceFullscreen.value = true;
+      preventTabSwitching.value = true;
+      detectSidePanel.value = true;
+      preventCopyPaste.value = true;
+      blockDevTools.value = true;
+      showWatermark.value = true;
+    }
 
     // Populate from getExam if available
     if (exam.problems && Array.isArray(exam.problems)) {
@@ -489,6 +564,16 @@ async function save() {
       passcode: accessType.value === 'passcode' ? passcode.value.trim() : null,
       maxViolations: Number(maxViolations.value) >= 1 ? Number(maxViolations.value) : 5,
       allowedLanguages: selectedLanguages.value,
+      proctoringConfig: {
+        isProctored: isProctored.value,
+        enforceFullscreen: enforceFullscreen.value,
+        preventTabSwitching: preventTabSwitching.value,
+        detectSidePanel: detectSidePanel.value,
+        preventCopyPaste: preventCopyPaste.value,
+        blockDevTools: blockDevTools.value,
+        showWatermark: showWatermark.value,
+        maxViolations: Number(maxViolations.value) >= 1 ? Number(maxViolations.value) : 5,
+      },
     };
 
     let targetExamId = examId.value;
@@ -919,24 +1004,301 @@ async function onDelete() {
         </div>
 
         <!-- Proctoring & Anti-Cheating Policy Card -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col gap-5">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-[20px] text-rose-600">gpp_maybe</span>
-              <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                Anti-Cheating & Proctoring Policy
-              </h3>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col gap-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <div
+                class="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+                :class="isProctored ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'"
+              >
+                <span class="material-symbols-outlined text-[20px]">
+                  {{ isProctored ? 'gpp_maybe' : 'shield_moon' }}
+                </span>
+              </div>
+              <div>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Anti-Cheating & Proctoring Engine
+                </h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  Configure browser lockdown, integrity rules, and real-time candidate monitoring
+                </p>
+              </div>
             </div>
-            <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold border border-rose-200 dark:border-rose-800/80">
-              Lockout Limit
-            </span>
+
+            <!-- Master Toggle Switch -->
+            <div class="flex items-center gap-3">
+              <span
+                class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-colors"
+                :class="
+                  isProctored
+                    ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/80'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                "
+              >
+                {{ isProctored ? 'Proctored Assessment' : 'Open / Unproctored' }}
+              </span>
+
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="isProctored"
+                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                :class="isProctored ? 'bg-rose-600' : 'bg-slate-300 dark:bg-slate-700'"
+                @click="isProctored = !isProctored"
+              >
+                <span
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out"
+                  :class="isProctored ? 'translate-x-5' : 'translate-x-0'"
+                />
+              </button>
+            </div>
           </div>
 
-          <div class="flex flex-col gap-3">
-            <div class="flex flex-col gap-1.5">
+          <!-- When Proctoring is Turned OFF -->
+          <div
+            v-if="!isProctored"
+            class="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-xl flex items-center justify-between text-xs text-slate-600 dark:text-slate-300"
+          >
+            <div class="flex items-center gap-2.5">
+              <span class="material-symbols-outlined text-[20px] text-slate-400">lock_open_right</span>
+              <span>Proctoring is disabled. Candidates can take this test freely without full-screen restrictions, focus loss counters, or watermark overlays.</span>
+            </div>
+            <button
+              type="button"
+              class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs cursor-pointer transition-colors shadow-xs"
+              @click="isProctored = true"
+            >
+              Turn On Proctoring
+            </button>
+          </div>
+
+          <!-- When Proctoring is Turned ON -->
+          <template v-else>
+            <!-- Presets Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl">
+              <div class="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 font-semibold">
+                <span class="material-symbols-outlined text-[16px] text-rose-500">auto_fix_high</span>
+                <span>Security Presets:</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <button
+                  type="button"
+                  class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer font-bold transition-all shadow-xs"
+                  @click="applyProctoringPreset('strict')"
+                >
+                  🔒 Strict (Full Lockdown)
+                </button>
+                <button
+                  type="button"
+                  class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer font-bold transition-all shadow-xs"
+                  @click="applyProctoringPreset('standard')"
+                >
+                  🛡️ Standard (Recommended)
+                </button>
+                <button
+                  type="button"
+                  class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer font-bold transition-all shadow-xs"
+                  @click="applyProctoringPreset('lenient')"
+                >
+                  📖 Lenient (Open Book)
+                </button>
+              </div>
+            </div>
+
+            <!-- Granular Guard Switches Grid -->
+            <div>
+              <label class="text-xs font-bold text-slate-800 dark:text-slate-200 block mb-2.5">
+                Active Integrity & Proctoring Guards ({{ activeGuardsCount }}/6 enabled)
+              </label>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- 1. Fullscreen Enforcement -->
+                <div
+                  class="p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer"
+                  :class="
+                    enforceFullscreen
+                      ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/60'
+                      : 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 opacity-70'
+                  "
+                  @click="enforceFullscreen = !enforceFullscreen"
+                >
+                  <div class="flex items-start gap-2.5">
+                    <span
+                      class="material-symbols-outlined text-[20px] mt-0.5"
+                      :class="enforceFullscreen ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'"
+                    >fullscreen</span>
+                    <div class="flex flex-col">
+                      <span class="text-xs font-bold text-slate-900 dark:text-white">Full-Screen Lockdown</span>
+                      <span class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
+                        Mandates fullscreen mode; exiting pauses exam and increments violation count.
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    :checked="enforceFullscreen"
+                    class="mt-1 accent-rose-600 cursor-pointer"
+                    @click.stop="enforceFullscreen = !enforceFullscreen"
+                  />
+                </div>
+
+                <!-- 2. Tab Switch & Focus Guard -->
+                <div
+                  class="p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer"
+                  :class="
+                    preventTabSwitching
+                      ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/60'
+                      : 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 opacity-70'
+                  "
+                  @click="preventTabSwitching = !preventTabSwitching"
+                >
+                  <div class="flex items-start gap-2.5">
+                    <span
+                      class="material-symbols-outlined text-[20px] mt-0.5"
+                      :class="preventTabSwitching ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'"
+                    >tab_unselected</span>
+                    <div class="flex flex-col">
+                      <span class="text-xs font-bold text-slate-900 dark:text-white">Tab Switch & Blur Monitor</span>
+                      <span class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
+                        Detects navigating to another tab, minimizing window, or losing desktop focus.
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    :checked="preventTabSwitching"
+                    class="mt-1 accent-rose-600 cursor-pointer"
+                    @click.stop="preventTabSwitching = !preventTabSwitching"
+                  />
+                </div>
+
+                <!-- 3. AI Side Panel Detector -->
+                <div
+                  class="p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer"
+                  :class="
+                    detectSidePanel
+                      ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/60'
+                      : 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 opacity-70'
+                  "
+                  @click="detectSidePanel = !detectSidePanel"
+                >
+                  <div class="flex items-start gap-2.5">
+                    <span
+                      class="material-symbols-outlined text-[20px] mt-0.5"
+                      :class="detectSidePanel ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'"
+                    >dock_to_left</span>
+                    <div class="flex flex-col">
+                      <span class="text-xs font-bold text-slate-900 dark:text-white">AI Side Panel Detector</span>
+                      <span class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
+                        Detects browser sidebars (Chrome Gemini, Edge Copilot) that reduce viewport width.
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    :checked="detectSidePanel"
+                    class="mt-1 accent-rose-600 cursor-pointer"
+                    @click.stop="detectSidePanel = !detectSidePanel"
+                  />
+                </div>
+
+                <!-- 4. Clipboard & Context Menu Guard -->
+                <div
+                  class="p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer"
+                  :class="
+                    preventCopyPaste
+                      ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/60'
+                      : 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 opacity-70'
+                  "
+                  @click="preventCopyPaste = !preventCopyPaste"
+                >
+                  <div class="flex items-start gap-2.5">
+                    <span
+                      class="material-symbols-outlined text-[20px] mt-0.5"
+                      :class="preventCopyPaste ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'"
+                    >content_paste_off</span>
+                    <div class="flex flex-col">
+                      <span class="text-xs font-bold text-slate-900 dark:text-white">Copy/Paste & Right-Click Block</span>
+                      <span class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
+                        Prevents copying question text, right-click inspect menu, and text selection.
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    :checked="preventCopyPaste"
+                    class="mt-1 accent-rose-600 cursor-pointer"
+                    @click.stop="preventCopyPaste = !preventCopyPaste"
+                  />
+                </div>
+
+                <!-- 5. DevTools Shortcut Blocker -->
+                <div
+                  class="p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer"
+                  :class="
+                    blockDevTools
+                      ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/60'
+                      : 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 opacity-70'
+                  "
+                  @click="blockDevTools = !blockDevTools"
+                >
+                  <div class="flex items-start gap-2.5">
+                    <span
+                      class="material-symbols-outlined text-[20px] mt-0.5"
+                      :class="blockDevTools ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'"
+                    >terminal</span>
+                    <div class="flex flex-col">
+                      <span class="text-xs font-bold text-slate-900 dark:text-white">DevTools Shortcut Blocker</span>
+                      <span class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
+                        Intercepts keyboard shortcuts like F12, Ctrl+Shift+I, and Ctrl+U (View Source).
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    :checked="blockDevTools"
+                    class="mt-1 accent-rose-600 cursor-pointer"
+                    @click.stop="blockDevTools = !blockDevTools"
+                  />
+                </div>
+
+                <!-- 6. Candidate Watermark Pattern -->
+                <div
+                  class="p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer"
+                  :class="
+                    showWatermark
+                      ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/60'
+                      : 'bg-slate-50/60 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 opacity-70'
+                  "
+                  @click="showWatermark = !showWatermark"
+                >
+                  <div class="flex items-start gap-2.5">
+                    <span
+                      class="material-symbols-outlined text-[20px] mt-0.5"
+                      :class="showWatermark ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'"
+                    >water_drop</span>
+                    <div class="flex flex-col">
+                      <span class="text-xs font-bold text-slate-900 dark:text-white">Candidate Watermark Grid</span>
+                      <span class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
+                        Renders subtle diagonal candidate name and roll number watermark across question panels.
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    :checked="showWatermark"
+                    class="mt-1 accent-rose-600 cursor-pointer"
+                    @click.stop="showWatermark = !showWatermark"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Lockout Limit Configuration -->
+            <div class="flex flex-col gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
               <div class="flex items-center justify-between">
                 <label class="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Maximum Allowed Violations / Focus Losses
+                  Maximum Allowed Violations / Lockout Limit
                 </label>
                 <div class="flex items-center gap-1.5 text-[11px]">
                   <span class="text-slate-400">Presets:</span>
@@ -974,11 +1336,8 @@ async function onDelete() {
                   {{ maxViolations >= 999 ? 'Unlimited violations allowed (no auto-lockout)' : `violations allowed before the exam is automatically locked & submitted` }}
                 </span>
               </div>
-              <p class="text-[11px] text-slate-400 mt-1">
-                Monitors tab switching, window blurring, browser side panels (Gemini / Copilot), and full-screen exits.
-              </p>
             </div>
-          </div>
+          </template>
         </div>
 
         <!-- Programming Environments Card -->
@@ -1099,13 +1458,34 @@ async function onDelete() {
           </div>
 
           <!-- Anti-Cheat Info Card -->
-          <div class="p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl flex flex-col gap-2">
-            <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs">
-              <span class="material-symbols-outlined text-[18px]">verified_user</span>
-              <span>Proctoring Guard Active</span>
+          <div
+            class="p-4 rounded-xl flex flex-col gap-2 border transition-all"
+            :class="
+              isProctored
+                ? 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/40'
+                : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60'
+            "
+          >
+            <div
+              class="flex items-center gap-2 font-bold text-xs"
+              :class="isProctored ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'"
+            >
+              <span class="material-symbols-outlined text-[18px]">
+                {{ isProctored ? 'verified_user' : 'lock_open_right' }}
+              </span>
+              <span>{{ isProctored ? 'Proctoring Guard Active' : 'Proctoring Disabled' }}</span>
             </div>
-            <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              Anti-cheat proctoring will automatically enforce fullscreen, prevent tab switching, and track question timing during the test.
+            <p
+              v-if="isProctored"
+              class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed"
+            >
+              {{ activeGuardsCount }} of 6 guards active • Lockout limit: {{ maxViolations >= 999 ? 'None' : maxViolations }} violations.
+            </p>
+            <p
+              v-else
+              class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed"
+            >
+              Open assessment mode. No fullscreen lockdown or focus violation tracking will be enforced.
             </p>
           </div>
 

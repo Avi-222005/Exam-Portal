@@ -8,6 +8,17 @@ export interface User {
   metadata?: Record<string, string | number | boolean>;
 }
 
+export interface ProctoringConfig {
+  isProctored: boolean;
+  enforceFullscreen: boolean;
+  preventTabSwitching: boolean;
+  detectSidePanel: boolean;
+  preventCopyPaste: boolean;
+  blockDevTools: boolean;
+  showWatermark: boolean;
+  maxViolations?: number;
+}
+
 export interface Exam {
   id: number;
   title: string;
@@ -19,6 +30,7 @@ export interface Exam {
   accessType?: 'open' | 'passcode' | 'whitelist';
   isPasscodeProtected?: boolean;
   maxViolations?: number;
+  proctoringConfig?: ProctoringConfig;
 }
 
 export interface ExamEnrollment {

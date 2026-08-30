@@ -1,5 +1,6 @@
 import { ref, computed, onMounted, onUnmounted, watch, type Ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
+import type { ProctoringConfig } from '../types';
 import api from '../services/api';
 
 export type ViolationType =
@@ -13,6 +14,7 @@ export const DEFAULT_MAX_VIOLATIONS = 5;
 export function useFullscreenGuard(
   examIdSource?: Ref<number | string | undefined> | (() => number | string | undefined),
   maxViolationsSource?: Ref<number | undefined> | (() => number | undefined) | number,
+  proctoringConfigSource?: Ref<ProctoringConfig | undefined> | (() => ProctoringConfig | undefined),
 ) {
   const authStore = useAuthStore();
 
@@ -31,7 +33,28 @@ export function useFullscreenGuard(
     return DEFAULT_MAX_VIOLATIONS;
   };
 
-  const maxViolations = computed(getMaxViolations);
+  const getProctoringConfig = (): ProctoringConfig => {
+    let cfg: ProctoringConfig | undefined;
+    if (typeof proctoringConfigSource === 'function') {
+      cfg = proctoringConfigSource();
+    } else if (proctoringConfigSource && 'value' in proctoringConfigSource) {
+      cfg = proctoringConfigSource.value;
+    }
+    return {
+      isProctored: cfg?.isProctored !== undefined ? Boolean(cfg.isProctored) : true,
+      enforceFullscreen: cfg?.enforceFullscreen !== undefined ? Boolean(cfg.enforceFullscreen) : true,
+      preventTabSwitching: cfg?.preventTabSwitching !== undefined ? Boolean(cfg.preventTabSwitching) : true,
+      detectSidePanel: cfg?.detectSidePanel !== undefined ? Boolean(cfg.detectSidePanel) : true,
+      preventCopyPaste: cfg?.preventCopyPaste !== undefined ? Boolean(cfg.preventCopyPaste) : true,
+      blockDevTools: cfg?.blockDevTools !== undefined ? Boolean(cfg.blockDevTools) : true,
+      showWatermark: cfg?.showWatermark !== undefined ? Boolean(cfg.showWatermark) : true,
+      maxViolations: cfg?.maxViolations ?? getMaxViolations(),
+    };
+  };
+
+  const config = computed(getProctoringConfig);
+  const isProctored = computed(() => config.value.isProctored);
+  const maxViolations = computed(() => config.value.maxViolations ?? getMaxViolations());
 
   const getViolationsKey = () => `cv_u_${getUserId()}_exam_${getExamId()}_fs_violations`;
 
@@ -48,17 +71,22 @@ export function useFullscreenGuard(
 
   let pollInterval: number | null = null;
 
-  const isLockedOut = computed(() => violationCount.value >= maxViolations.value);
+  const isLockedOut = computed(() => {
+    if (!isProctored.value) return false;
+    if (maxViolations.value >= 999) return false;
+    return violationCount.value >= maxViolations.value;
+  });
 
   // Shield flag: whenever modal is visible, focus is lost, or not in fullscreen,
   // question and code editor content must be completely unmounted from the DOM!
   const isQuestionContentHidden = computed(() => {
+    if (!isProctored.value) return false;
     return (
       !isStarted.value ||
       showGuardModal.value ||
       isCurrentlyViolating.value ||
       isLockedOut.value ||
-      !isFullscreen.value
+      (config.value.enforceFullscreen && !isFullscreen.value)
     );
   });
 
@@ -95,8 +123,19 @@ export function useFullscreenGuard(
   }
 
   function triggerViolation(reason: ViolationType) {
+    if (!isProctored.value) return;
     if (!isStarted.value) return;
     if (isCurrentlyViolating.value) return; // Already paused; do not multi-count
+
+    // Check individual guard configurations
+    if (reason === 'fullscreen_exit' && !config.value.enforceFullscreen) return;
+    if (
+      (reason === 'blur_focus_lost' || reason === 'tab_switched') &&
+      !config.value.preventTabSwitching
+    ) {
+      return;
+    }
+    if (reason === 'side_panel_detected' && !config.value.detectSidePanel) return;
 
     isCurrentlyViolating.value = true;
     currentViolationReason.value = reason;
@@ -122,6 +161,7 @@ export function useFullscreenGuard(
     const sidePanelActive = checkSidePanelStatus();
     isSidePanelOpen.value = sidePanelActive;
 
+    if (!isProctored.value) return;
     if (!isStarted.value) return;
 
     if (isLockedOut.value) {
@@ -129,17 +169,17 @@ export function useFullscreenGuard(
       return;
     }
 
-    if (!activeFs) {
+    if (config.value.enforceFullscreen && !activeFs) {
       triggerViolation('fullscreen_exit');
       return;
     }
 
-    if (sidePanelActive) {
+    if (config.value.detectSidePanel && sidePanelActive) {
       triggerViolation('side_panel_detected');
       return;
     }
 
-    if (!document.hasFocus()) {
+    if (config.value.preventTabSwitching && !document.hasFocus()) {
       triggerViolation('blur_focus_lost');
       return;
     }
@@ -152,11 +192,15 @@ export function useFullscreenGuard(
   }
 
   function handleBlur() {
+    if (!isProctored.value) return;
+    if (!config.value.preventTabSwitching) return;
     if (!isStarted.value) return;
     triggerViolation('blur_focus_lost');
   }
 
   function handleVisibilityChange() {
+    if (!isProctored.value) return;
+    if (!config.value.preventTabSwitching) return;
     if (!isStarted.value) return;
     if (document.visibilityState === 'hidden') {
       triggerViolation('tab_switched');
@@ -168,34 +212,39 @@ export function useFullscreenGuard(
   }
 
   function handleContextMenu(e: MouseEvent) {
+    if (!isProctored.value) return;
+    if (!config.value.preventCopyPaste) return;
     if (isStarted.value) {
       e.preventDefault();
     }
   }
 
   function handleKeyDown(e: KeyboardEvent) {
+    if (!isProctored.value) return;
     if (!isStarted.value) return;
 
     // Block F12 (DevTools)
-    if (e.key === 'F12') {
-      e.preventDefault();
-      return;
-    }
+    if (config.value.blockDevTools) {
+      if (e.key === 'F12') {
+        e.preventDefault();
+        return;
+      }
 
-    // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (Inspect Element)
-    if (
-      (e.ctrlKey || e.metaKey) &&
-      e.shiftKey &&
-      ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)
-    ) {
-      e.preventDefault();
-      return;
-    }
+      // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (Inspect Element)
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)
+      ) {
+        e.preventDefault();
+        return;
+      }
 
-    // Block Ctrl+U (View Source)
-    if ((e.ctrlKey || e.metaKey) && ['U', 'u'].includes(e.key)) {
-      e.preventDefault();
-      return;
+      // Block Ctrl+U (View Source)
+      if ((e.ctrlKey || e.metaKey) && ['U', 'u'].includes(e.key)) {
+        e.preventDefault();
+        return;
+      }
     }
 
     // Block Ctrl+R / F5 (Page Refresh)
@@ -209,6 +258,7 @@ export function useFullscreenGuard(
 
     // Block Ctrl+A / Ctrl+C / Ctrl+X when focused on question areas
     if (
+      config.value.preventCopyPaste &&
       (e.ctrlKey || e.metaKey) &&
       ['A', 'a', 'C', 'c', 'X', 'x'].includes(e.key)
     ) {
@@ -237,6 +287,8 @@ export function useFullscreenGuard(
   }
 
   function handleCopyOrCut(e: ClipboardEvent) {
+    if (!isProctored.value) return;
+    if (!config.value.preventCopyPaste) return;
     if (!isStarted.value) return;
 
     const target = e.target as HTMLElement | null;
@@ -246,7 +298,7 @@ export function useFullscreenGuard(
       anchorNode?.nodeType === Node.ELEMENT_NODE
         ? anchorNode
         : anchorNode?.parentElement
-      ) as HTMLElement | null;
+    ) as HTMLElement | null;
 
     const isInsideEditor =
       target?.closest('.monaco-editor, .view-lines, textarea, input') ||
@@ -263,6 +315,8 @@ export function useFullscreenGuard(
   }
 
   function handleSelectStart(e: Event) {
+    if (!isProctored.value) return;
+    if (!config.value.preventCopyPaste) return;
     if (!isStarted.value) return;
     const target = e.target as HTMLElement | null;
     if (target?.closest('.unselectable-area, [data-unselectable="true"]')) {
@@ -276,6 +330,8 @@ export function useFullscreenGuard(
   }
 
   function handleDragStart(e: DragEvent) {
+    if (!isProctored.value) return;
+    if (!config.value.preventCopyPaste) return;
     if (!isStarted.value) return;
     const target = e.target as HTMLElement | null;
     if (
@@ -286,14 +342,34 @@ export function useFullscreenGuard(
   }
 
   async function enterFullscreen(): Promise<boolean> {
+    if (!isProctored.value) {
+      isStarted.value = true;
+      isFullscreen.value = true;
+      isCurrentlyViolating.value = false;
+      showGuardModal.value = false;
+      isSidePanelOpen.value = false;
+      currentViolationReason.value = null;
+      return true;
+    }
+
     if (isLockedOut.value) return false;
 
-    // Hard Gate: If browser side panel is still open, refuse to resume!
-    if (checkSidePanelStatus()) {
+    // Hard Gate: If browser side panel is still open, refuse to resume if detectSidePanel is active
+    if (config.value.detectSidePanel && checkSidePanelStatus()) {
       isSidePanelOpen.value = true;
       currentViolationReason.value = 'side_panel_detected';
       showGuardModal.value = true;
       return false;
+    }
+
+    if (!config.value.enforceFullscreen) {
+      isStarted.value = true;
+      isFullscreen.value = true;
+      isCurrentlyViolating.value = false;
+      showGuardModal.value = false;
+      isSidePanelOpen.value = false;
+      currentViolationReason.value = null;
+      return true;
     }
 
     try {
@@ -360,13 +436,22 @@ export function useFullscreenGuard(
 
     // Active polling to track sidebar closure in real time
     pollInterval = window.setInterval(() => {
+      if (!isProctored.value) return;
       const sidePanelActive = checkSidePanelStatus();
       isSidePanelOpen.value = sidePanelActive;
 
       if (isStarted.value) {
-        if (sidePanelActive && !isCurrentlyViolating.value) {
+        if (
+          config.value.detectSidePanel &&
+          sidePanelActive &&
+          !isCurrentlyViolating.value
+        ) {
           triggerViolation('side_panel_detected');
-        } else if (!document.hasFocus() && !isCurrentlyViolating.value) {
+        } else if (
+          config.value.preventTabSwitching &&
+          !document.hasFocus() &&
+          !isCurrentlyViolating.value
+        ) {
           triggerViolation('blur_focus_lost');
         }
       }
@@ -397,6 +482,8 @@ export function useFullscreenGuard(
     maxViolations,
     isQuestionContentHidden,
     isStarted,
+    isProctored,
+    config,
     enterFullscreen,
     exitFullscreen,
     clearSession,

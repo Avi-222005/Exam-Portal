@@ -49,4 +49,16 @@ export class UpdateExamDto {
   @Min(1)
   @IsOptional()
   maxViolations?: number;
+
+  @IsOptional()
+  proctoringConfig?: {
+    isProctored?: boolean;
+    enforceFullscreen?: boolean;
+    preventTabSwitching?: boolean;
+    detectSidePanel?: boolean;
+    preventCopyPaste?: boolean;
+    blockDevTools?: boolean;
+    showWatermark?: boolean;
+    maxViolations?: number;
+  };
 }

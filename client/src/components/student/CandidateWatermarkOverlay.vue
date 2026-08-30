@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useAuthStore } from '../../stores/auth';
+import { useExamStore } from '../../stores/exam';
 
 const authStore = useAuthStore();
+const examStore = useExamStore();
+
+const isWatermarkVisible = computed(() => {
+  const cfg = examStore.activeExam?.proctoringConfig;
+  if (!cfg) return true; // default backwards compatible
+  if (cfg.isProctored === false) return false;
+  return cfg.showWatermark !== false;
+});
 
 const watermarkText = computed(() => {
   const u = authStore.user;
@@ -18,6 +27,7 @@ const items = computed(() => Array.from({ length: 96 }, (_, i) => i));
 
 <template>
   <div
+    v-if="isWatermarkVisible"
     class="absolute inset-0 pointer-events-none select-none z-10 overflow-hidden flex flex-wrap items-center justify-around gap-x-10 gap-y-8 p-4 opacity-[0.06] dark:opacity-[0.08] transform -rotate-12 scale-125"
     aria-hidden="true"
   >

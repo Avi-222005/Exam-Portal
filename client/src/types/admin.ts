@@ -1,4 +1,4 @@
-import type { Problem } from './index';
+import type { Problem, ProctoringConfig } from './index';
 
 export interface AdminStats {
   totalExams: number;
@@ -51,6 +51,7 @@ export interface ExamWithProblems {
   accessType?: 'open' | 'passcode' | 'whitelist';
   passcode?: string | null;
   maxViolations?: number;
+  proctoringConfig?: ProctoringConfig;
   createdAt: string;
   problems: ProblemWithTestCases[];
 }

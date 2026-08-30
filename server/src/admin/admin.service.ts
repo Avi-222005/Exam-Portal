@@ -232,6 +232,21 @@ export class AdminService {
   }
 
   async createExam(dto: CreateExamDto) {
+    const rawConfig = dto.proctoringConfig || {};
+    const proctoringConfig = {
+      isProctored: rawConfig.isProctored !== undefined ? Boolean(rawConfig.isProctored) : true,
+      enforceFullscreen: rawConfig.enforceFullscreen !== undefined ? Boolean(rawConfig.enforceFullscreen) : true,
+      preventTabSwitching: rawConfig.preventTabSwitching !== undefined ? Boolean(rawConfig.preventTabSwitching) : true,
+      detectSidePanel: rawConfig.detectSidePanel !== undefined ? Boolean(rawConfig.detectSidePanel) : true,
+      preventCopyPaste: rawConfig.preventCopyPaste !== undefined ? Boolean(rawConfig.preventCopyPaste) : true,
+      blockDevTools: rawConfig.blockDevTools !== undefined ? Boolean(rawConfig.blockDevTools) : true,
+      showWatermark: rawConfig.showWatermark !== undefined ? Boolean(rawConfig.showWatermark) : true,
+      maxViolations:
+        rawConfig.maxViolations !== undefined
+          ? Number(rawConfig.maxViolations)
+          : (dto.maxViolations !== undefined && Number(dto.maxViolations) >= 1 ? Number(dto.maxViolations) : 5),
+    };
+
     const exam = this.examRepo.create({
       title: dto.title,
       startTime: new Date(dto.startTime),
@@ -241,10 +256,8 @@ export class AdminService {
       isActive: dto.isActive ?? false,
       accessType: dto.accessType ?? 'open',
       passcode: dto.passcode?.trim() || null,
-      maxViolations:
-        dto.maxViolations !== undefined && Number(dto.maxViolations) >= 1
-          ? Number(dto.maxViolations)
-          : 5,
+      maxViolations: proctoringConfig.maxViolations,
+      proctoringConfig,
     });
     const savedExam = await this.examRepo.save(exam);
 
@@ -284,6 +297,21 @@ export class AdminService {
     if (dto.maxViolations !== undefined)
       exam.maxViolations =
         Number(dto.maxViolations) >= 1 ? Number(dto.maxViolations) : 5;
+
+    if (dto.proctoringConfig !== undefined) {
+      const currentConfig = exam.proctoringConfig || {};
+      const updatedConfig = {
+        ...currentConfig,
+        ...dto.proctoringConfig,
+      };
+      if (dto.maxViolations !== undefined) {
+        updatedConfig.maxViolations = Number(dto.maxViolations);
+      }
+      exam.proctoringConfig = updatedConfig as any;
+      if (updatedConfig.maxViolations !== undefined) {
+        exam.maxViolations = Number(updatedConfig.maxViolations);
+      }
+    }
 
     return this.examRepo.save(exam);
   }
@@ -383,6 +411,16 @@ export class AdminService {
         accessType: source.accessType ?? 'open',
         passcode: source.passcode ?? null,
         maxViolations: source.maxViolations ?? 5,
+        proctoringConfig: source.proctoringConfig ?? {
+          isProctored: true,
+          enforceFullscreen: true,
+          preventTabSwitching: true,
+          detectSidePanel: true,
+          preventCopyPaste: true,
+          blockDevTools: true,
+          showWatermark: true,
+          maxViolations: source.maxViolations ?? 5,
+        },
         isActive: false,
       });
       const savedExam = await manager.save(newExam);

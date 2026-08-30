@@ -46,6 +46,7 @@ const {
 } = useFullscreenGuard(
   computed(() => examStore.activeExam?.id),
   computed(() => examStore.activeExam?.maxViolations),
+  computed(() => examStore.activeExam?.proctoringConfig),
 );
 
 // Lockout safety trigger (if not manually submitted within 15 seconds)
