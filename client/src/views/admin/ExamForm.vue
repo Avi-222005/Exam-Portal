@@ -486,7 +486,7 @@ async function save() {
       isActive: isActive.value,
       accessType: accessType.value,
       passcode: accessType.value === 'passcode' ? passcode.value.trim() : null,
-      maxViolations: maxViolations.value || 5,
+      maxViolations: Number(maxViolations.value) >= 1 ? Number(maxViolations.value) : 5,
       allowedLanguages: selectedLanguages.value,
     };
 

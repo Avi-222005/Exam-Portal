@@ -80,6 +80,8 @@ export class ExamsController {
         endTime: exam.endTime,
         durationMinutes: exam.durationMinutes,
         allowedLanguages: exam.allowedLanguages,
+        accessType: exam.accessType,
+        maxViolations: exam.maxViolations ?? 5,
       })),
       metadata: {
         serverTime: new Date().toISOString(),

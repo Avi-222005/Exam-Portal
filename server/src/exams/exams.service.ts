@@ -284,6 +284,7 @@ export class ExamsService {
         allowedLanguages: exam.allowedLanguages,
         accessType: exam.accessType || 'open',
         isPasscodeProtected: exam.accessType === 'passcode',
+        maxViolations: exam.maxViolations ?? 5,
         mcqCount,
         codingCount,
         totalProblems: examMappings.length,

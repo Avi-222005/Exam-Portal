@@ -137,6 +137,7 @@ export class AdminService {
         startTime: e.startTime,
         endTime: e.endTime,
         accessType: e.accessType,
+        maxViolations: e.maxViolations,
         createdAt: e.createdAt,
       })),
       totalStudents,
@@ -240,6 +241,10 @@ export class AdminService {
       isActive: dto.isActive ?? false,
       accessType: dto.accessType ?? 'open',
       passcode: dto.passcode?.trim() || null,
+      maxViolations:
+        dto.maxViolations !== undefined && Number(dto.maxViolations) >= 1
+          ? Number(dto.maxViolations)
+          : 5,
     });
     const savedExam = await this.examRepo.save(exam);
 
@@ -276,6 +281,9 @@ export class AdminService {
     if (dto.isActive !== undefined) exam.isActive = dto.isActive;
     if (dto.accessType !== undefined) exam.accessType = dto.accessType;
     if (dto.passcode !== undefined) exam.passcode = dto.passcode?.trim() || null;
+    if (dto.maxViolations !== undefined)
+      exam.maxViolations =
+        Number(dto.maxViolations) >= 1 ? Number(dto.maxViolations) : 5;
 
     return this.examRepo.save(exam);
   }
@@ -372,6 +380,9 @@ export class AdminService {
         endTime,
         durationMinutes: source.durationMinutes,
         allowedLanguages: source.allowedLanguages,
+        accessType: source.accessType ?? 'open',
+        passcode: source.passcode ?? null,
+        maxViolations: source.maxViolations ?? 5,
         isActive: false,
       });
       const savedExam = await manager.save(newExam);
