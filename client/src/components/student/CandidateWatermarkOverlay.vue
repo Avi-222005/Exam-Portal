@@ -18,7 +18,7 @@ const items = computed(() => Array.from({ length: 96 }, (_, i) => i));
 
 <template>
   <div
-    class="fixed inset-0 pointer-events-none select-none z-30 overflow-hidden flex flex-wrap items-center justify-around gap-x-10 gap-y-8 p-4 opacity-[0.06] dark:opacity-[0.08] transform -rotate-12 scale-125"
+    class="absolute inset-0 pointer-events-none select-none z-10 overflow-hidden flex flex-wrap items-center justify-around gap-x-10 gap-y-8 p-4 opacity-[0.06] dark:opacity-[0.08] transform -rotate-12 scale-125"
     aria-hidden="true"
   >
     <div

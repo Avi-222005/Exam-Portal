@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import type { Problem } from '../../types';
 import { useUiStore } from '../../stores/ui';
 import ObfuscatedText from './ObfuscatedText.vue';
+import CandidateWatermarkOverlay from './CandidateWatermarkOverlay.vue';
 
 const props = defineProps<{
   problem: Problem;
@@ -35,12 +36,14 @@ function formatImageSrc(data: string | null | undefined): string {
 
 <template>
   <div
-    class="flex flex-col md:flex-row h-full w-full select-none unselectable-area overflow-hidden"
+    class="relative flex flex-col md:flex-row h-full w-full select-none unselectable-area overflow-hidden"
     data-unselectable="true"
     @copy.prevent
     @cut.prevent
     @dragstart.prevent
   >
+    <!-- Watermark Overlay (scoped to MCQ section) -->
+    <CandidateWatermarkOverlay />
     <!-- ── Left: MCQ Question Statement ──────────────────────────── -->
     <div
       class="flex-1 flex flex-col bg-white dark:bg-[#0f172a] border-r border-slate-200 dark:border-slate-800 overflow-hidden select-none"

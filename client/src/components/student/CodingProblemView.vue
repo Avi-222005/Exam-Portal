@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import type { Problem } from '../../types';
 import ObfuscatedText from './ObfuscatedText.vue';
+import CandidateWatermarkOverlay from './CandidateWatermarkOverlay.vue';
 
 const props = defineProps<{
   problem: Problem;
@@ -51,12 +52,14 @@ function formatImageSrc(data: string | null | undefined): string {
 
 <template>
   <div
-    class="flex flex-col h-full bg-white dark:bg-[#0f172a] select-none unselectable-area overflow-hidden"
+    class="relative flex flex-col h-full bg-white dark:bg-[#0f172a] select-none unselectable-area overflow-hidden"
     data-unselectable="true"
     @copy.prevent
     @cut.prevent
     @dragstart.prevent
   >
+    <!-- Watermark Overlay (scoped to problem description only) -->
+    <CandidateWatermarkOverlay />
     <!-- ── Header: Question No & Bookmark ────────────────────────── -->
     <div
       class="h-11 px-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0 bg-white dark:bg-[#0f172a] select-none"

@@ -9,7 +9,6 @@ import McqProblemView from './McqProblemView.vue';
 import SubmitTestModal from './SubmitTestModal.vue';
 import FullscreenGuardModal from './FullscreenGuardModal.vue';
 import ExamSectionDetailsModal from './ExamSectionDetailsModal.vue';
-import CandidateWatermarkOverlay from './CandidateWatermarkOverlay.vue';
 import { useProblemsStore } from '../../stores/problems';
 import { useEditorStore } from '../../stores/editor';
 import { useExamStore } from '../../stores/exam';
@@ -509,9 +508,6 @@ async function handleConfirmSubmitTest() {
       @close="showSubmitModal = false"
       @confirm="handleConfirmSubmitTest"
     />
-
-    <!-- ── Dynamic Candidate Watermark Overlay ────────────────────── -->
-    <CandidateWatermarkOverlay />
 
     <!-- ── Test Section Details Modal ──────────────────────────────── -->
     <ExamSectionDetailsModal
