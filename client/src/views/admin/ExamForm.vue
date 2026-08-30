@@ -19,6 +19,7 @@ import LinkProblemModal from './LinkProblemModal.vue';
 import BulkImportModal from './BulkImportModal.vue';
 import QuickEditProblemModal from './QuickEditProblemModal.vue';
 import ExamCandidateModal from './ExamCandidateModal.vue';
+import RegalDateTimePicker from '../../components/admin/RegalDateTimePicker.vue';
 import { LANGUAGE_NAMES } from '../../data/languages';
 
 const route = useRoute();
@@ -747,16 +748,16 @@ async function onDelete() {
                 </label>
                 <button
                   type="button"
-                  class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-medium"
+                  class="text-[11px] text-primary hover:underline cursor-pointer font-medium"
                   @click="setStartNow"
                 >
                   Set to Now
                 </button>
               </div>
-              <input
+              <RegalDateTimePicker
                 v-model="startTime"
-                type="datetime-local"
-                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:border-blue-500 outline-hidden"
+                placeholder="Select start date & time"
+                :has-error="!!errors.startTime"
               />
               <span v-if="errors.startTime" class="text-xs text-red-500">{{ errors.startTime }}</span>
             </div>
@@ -765,10 +766,10 @@ async function onDelete() {
               <label class="text-xs font-bold text-slate-800 dark:text-slate-200">
                 End Time <span class="text-red-500">*</span>
               </label>
-              <input
+              <RegalDateTimePicker
                 v-model="endTime"
-                type="datetime-local"
-                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:border-blue-500 outline-hidden"
+                placeholder="Select end date & time"
+                :has-error="!!errors.endTime"
               />
               <span v-if="errors.endTime" class="text-xs text-red-500">{{ errors.endTime }}</span>
             </div>
@@ -808,7 +809,8 @@ async function onDelete() {
             >
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                  <span>🟢</span> Open Access
+                  <span class="material-symbols-outlined text-[17px] text-emerald-500">public</span>
+                  Open Access
                 </span>
                 <input
                   type="radio"
@@ -835,7 +837,8 @@ async function onDelete() {
             >
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                  <span>🔑</span> Passcode Protected
+                  <span class="material-symbols-outlined text-[17px] text-purple-500">key</span>
+                  Passcode Protected
                 </span>
                 <input
                   type="radio"
@@ -862,7 +865,8 @@ async function onDelete() {
             >
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                  <span>🛡️</span> Whitelist Only
+                  <span class="material-symbols-outlined text-[17px] text-amber-500">verified_user</span>
+                  Whitelist Only
                 </span>
                 <input
                   type="radio"
