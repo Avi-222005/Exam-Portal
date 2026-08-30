@@ -11,7 +11,6 @@ import { brand } from '../config/brand';
 const router = useRouter();
 const examStore = useExamStore();
 const authStore = useAuthStore();
-const mobileMenuOpen = ref(false);
 const entering = ref(false);
 const loading = ref(true);
 
@@ -105,7 +104,6 @@ async function enterContest(examParam?: Exam) {
 }
 
 function scrollTo(id: string) {
-  mobileMenuOpen.value = false;
   const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
@@ -262,65 +260,8 @@ const rules = [
     </div>
 
     <!-- ── Header ─────────────────────────────────────────────────────── -->
-    <AppHeader>
-      <template #nav>
-        <button
-          class="nav-link"
-          @click="scrollTo('features')"
-        >
-          Features
-        </button>
-        <button
-          class="nav-link"
-          @click="scrollTo('sandbox')"
-        >
-          Editor
-        </button>
-        <button
-          class="nav-link"
-          @click="scrollTo('how-it-works')"
-        >
-          How It Works
-        </button>
-        <button
-          class="nav-link"
-          @click="scrollTo('contests')"
-        >
-          Exams
-        </button>
-      </template>
+    <AppHeader />
 
-      <template #mobile-toggle>
-        <button
-          class="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-          @click="mobileMenuOpen = !mobileMenuOpen"
-        >
-          <span class="material-symbols-outlined text-[20px]">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
-        </button>
-      </template>
-    </AppHeader>
-
-    <!-- ── Mobile Menu ────────────────────────────────────────────────── -->
-    <Transition name="slide">
-      <div
-        v-if="mobileMenuOpen"
-        class="md:hidden fixed inset-x-0 top-[49px] z-40 bg-white/95 dark:bg-[#09090b]/95 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/[0.06] p-5 flex flex-col gap-3 shadow-2xl"
-      >
-        <router-link
-          v-if="authStore.isAuthenticated"
-          to="/dashboard"
-          class="flex items-center gap-2 text-xs font-bold text-primary py-2"
-        >
-          <span class="material-symbols-outlined text-[18px]">dashboard</span>
-          Dashboard
-        </router-link>
-        <button class="mobile-nav-link" @click="scrollTo('features')">Features</button>
-        <button class="mobile-nav-link" @click="scrollTo('sandbox')">Editor</button>
-        <button class="mobile-nav-link" @click="scrollTo('how-it-works')">How It Works</button>
-        <button class="mobile-nav-link" @click="scrollTo('contests')">Exams</button>
-        <button class="mobile-nav-link" @click="scrollTo('rules')">Fair Play</button>
-      </div>
-    </Transition>
 
     <main class="relative z-10 flex-1">
       <!-- ══════════════════════════════════════════════════════════════ -->
